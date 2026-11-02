@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { ConciergeAvatar, Logo, LogoMark } from "@/components/brand";
 import { Card, Pill, SectionHeading } from "@/components/ui";
+import { Parallax, Reveal } from "@/components/motion";
 import { Disclaimer } from "@/components/guest/GuestShell";
 import { isClaudeConfigured, isSupabaseConfigured, storageMode } from "@/lib/env";
 
@@ -56,59 +57,72 @@ export default function LandingPage() {
           className="pointer-events-none absolute -top-40 right-[-10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,#F3E3CD_0%,rgba(243,227,205,0)_68%)]"
         />
         <div className="container-page relative grid items-center gap-14 py-14 lg:grid-cols-[1.02fr_0.98fr] lg:py-24">
-          <div className="animate-fade-up">
-            <Pill tone="neutral" className="mb-6 bg-white/80">
-              <span className="size-1.5 rounded-full bg-brand" />
-              AI concierge for short stays
-            </Pill>
-            <h1 className="text-[40px] leading-[1.04] font-semibold tracking-[-0.03em] sm:text-[56px] lg:text-[62px]">
-              Every guest question,
-              <br className="hidden sm:block" /> answered like a{" "}
-              <span className="font-display text-brand italic">five-star</span>{" "}
-              concierge.
-            </h1>
-            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-ink-soft">
-              Airbnb Concierge turns a property record, local knowledge and house
-              rules into a warm, always-available assistant for guests — and turns
-              their problems into real tickets your team can act on.
-            </p>
+          <div>
+            <Reveal className="mb-6" y={14}>
+              <Pill tone="neutral" className="bg-white/80">
+                <span className="size-1.5 rounded-full bg-brand" />
+                AI concierge for short stays
+              </Pill>
+            </Reveal>
+            <Reveal y={26} delay={70}>
+              <h1 className="text-[40px] leading-[1.04] font-semibold tracking-[-0.03em] sm:text-[56px] lg:text-[62px]">
+                Every guest question,
+                <br className="hidden sm:block" /> answered like a{" "}
+                <span className="font-display text-brand italic">five-star</span>{" "}
+                concierge.
+              </h1>
+            </Reveal>
+            <Reveal className="mt-6" y={22} delay={140}>
+              <p className="max-w-xl text-[16px] leading-relaxed text-ink-soft">
+                Airbnb Concierge turns a property record, local knowledge and house
+                rules into a warm, always-available assistant for guests — and turns
+                their problems into real tickets your team can act on.
+              </p>
+            </Reveal>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Link href="/api/guest/start" className="btn-primary h-12 px-6 text-[15px]">
-                I&rsquo;m a Guest
-                <ArrowRight className="size-4" />
-              </Link>
-              <Link href="/host/login" className="btn-secondary h-12 px-6 text-[15px]">
-                Are you a Host?
-                <ArrowUpRight className="size-4" />
-              </Link>
-            </div>
+            <Reveal className="mt-8" y={20} delay={210}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Link href="/api/guest/start" className="btn-primary h-12 px-6 text-[15px]">
+                  I&rsquo;m a Guest
+                  <ArrowRight className="size-4" />
+                </Link>
+                <Link href="/host/login" className="btn-secondary h-12 px-6 text-[15px]">
+                  Are you a Host?
+                  <ArrowUpRight className="size-4" />
+                </Link>
+              </div>
+            </Reveal>
 
-            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] text-muted">
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="size-3.5 text-brand" /> No download
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="size-3.5 text-brand" /> No guest account
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="size-3.5 text-brand" /> Powered by Claude
-              </span>
-            </div>
+            <Reveal className="mt-5" y={16} delay={280}>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] text-muted">
+                <span className="inline-flex items-center gap-1.5">
+                  <Check className="size-3.5 text-brand" /> No download
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Check className="size-3.5 text-brand" /> No guest account
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Check className="size-3.5 text-brand" /> Powered by Claude
+                </span>
+              </div>
+            </Reveal>
 
             {!claudeReady ? (
-              <div className="mt-6 max-w-lg rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-[12.5px] leading-relaxed text-amber-900">
-                <strong className="font-semibold">Demo note:</strong> Claude is not
-                connected yet. Add <code className="rounded bg-white/70 px-1">ANTHROPIC_API_KEY</code>{" "}
-                to <code className="rounded bg-white/70 px-1">.env.local</code> to enable
-                live concierge replies. Everything else — property data, tickets and
-                the host dashboard — already works.
-              </div>
+              <Reveal className="mt-6 max-w-lg" y={16} delay={340}>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-[12.5px] leading-relaxed text-amber-900">
+                  <strong className="font-semibold">Demo note:</strong> Claude is not
+                  connected yet. Add <code className="rounded bg-white/70 px-1">ANTHROPIC_API_KEY</code>{" "}
+                  to <code className="rounded bg-white/70 px-1">.env.local</code> to enable
+                  live concierge replies. Everything else — property data, tickets and
+                  the host dashboard — already works.
+                </div>
+              </Reveal>
             ) : null}
           </div>
 
           {/* Product preview */}
-          <div className="relative animate-fade-up [animation-delay:120ms]">
+          <Parallax speed={0.26} className="relative">
+          <div className="animate-fade-up [animation-delay:120ms]">
             <div aria-hidden="true" className="absolute -inset-4 -z-10 rounded-[34px] bg-sand/60" />
             <Card className="overflow-hidden p-0">
               <div className="flex items-center justify-between border-b border-line/80 px-5 py-4">
@@ -208,6 +222,7 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+          </Parallax>
         </div>
       </section>
 
@@ -218,13 +233,15 @@ export default function LandingPage() {
             { value: "24/7", label: "Answers between check-in and check-out" },
             { value: "5 tools", label: "Actions Claude can actually run" },
             { value: "1 record", label: "The host's data, never a guess" },
-          ].map((item) => (
-            <div key={item.label} className="flex items-baseline gap-3">
+          ].map((item, i) => (
+            <Reveal key={item.label} delay={i * 90} y={14}>
+            <div className="flex items-baseline gap-3">
               <span className="font-display text-[28px] leading-none text-ink">
                 {item.value}
               </span>
               <span className="text-[12.5px] leading-snug text-muted">{item.label}</span>
             </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -269,10 +286,15 @@ export default function LandingPage() {
               title: "Honest by design",
               body: "No live traffic or event data is claimed. Unverified details are named as such, and emergencies go to 112.",
             },
-          ].map((feature) => (
-            <div
+          ].map((feature, i) => (
+            <Reveal
               key={feature.title}
-              className="group rounded-[20px] border border-line bg-white p-5 transition hover:-translate-y-0.5 hover:border-ink/15 hover:shadow-[0_18px_40px_-30px_rgba(25,19,16,0.45)]"
+              delay={(i % 3) * 90 + Math.floor(i / 3) * 70}
+              y={30}
+              className="h-full"
+            >
+            <div
+              className="group flex h-full flex-col rounded-[20px] border border-line bg-white p-5 transition hover:-translate-y-0.5 hover:border-ink/15 hover:shadow-[0_18px_40px_-30px_rgba(25,19,16,0.45)]"
             >
               <span className="grid size-9 place-items-center rounded-xl bg-sand text-ink transition group-hover:bg-brand-soft group-hover:text-brand">
                 <feature.icon className="size-4.5" strokeWidth={1.7} />
@@ -280,6 +302,7 @@ export default function LandingPage() {
               <h3 className="mt-4 text-[15px] font-semibold">{feature.title}</h3>
               <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{feature.body}</p>
             </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -288,11 +311,15 @@ export default function LandingPage() {
       <section id="how-it-works" className="border-y border-line bg-sand/40">
         <div className="container-page py-16 sm:py-20">
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-            <SectionHeading
-              eyebrow="How it works"
-              title="A guest asks. The concierge checks. The host acts."
-              description="Three connected steps, one system of record. This is the workflow the prototype was built to prove."
-            />
+            <div className="lg:sticky lg:top-24">
+              <Reveal y={20}>
+                <SectionHeading
+                  eyebrow="How it works"
+                  title="A guest asks. The concierge checks. The host acts."
+                  description="Three connected steps, one system of record. This is the workflow the prototype was built to prove."
+                />
+              </Reveal>
+            </div>
 
             <ol className="space-y-3">
               {[
@@ -314,8 +341,9 @@ export default function LandingPage() {
                   body: "A confirmed maintenance request becomes a ticket with a real ID, a priority and a notification in the host dashboard.",
                   icon: BellRing,
                 },
-              ].map((item) => (
-                <li key={item.step} className="surface flex gap-4 p-5">
+              ].map((item, i) => (
+                <li key={item.step}>
+                  <Reveal className="surface flex gap-4 p-5" delay={i * 110} y={30}>
                   <span className="font-display text-[22px] leading-none text-brand">
                     {item.step}
                   </span>
@@ -326,6 +354,7 @@ export default function LandingPage() {
                     </div>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{item.body}</p>
                   </div>
+                  </Reveal>
                 </li>
               ))}
             </ol>
@@ -336,7 +365,7 @@ export default function LandingPage() {
       {/* ---------------------------------------------------------- FOR HOSTS */}
       <section id="for-hosts" className="container-page py-16 sm:py-20">
         <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-          <div>
+          <Reveal>
             <SectionHeading
               eyebrow="For hosts"
               title="Less repetition. Better visibility. Same hospitality."
@@ -368,8 +397,10 @@ export default function LandingPage() {
                 See the guest side
               </Link>
             </div>
-          </div>
+          </Reveal>
 
+          <Parallax speed={0.16}>
+          <Reveal y={30} delay={80}>
           <Card className="p-5 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -426,6 +457,8 @@ export default function LandingPage() {
               <MapPin className="size-3" /> Eixample, Barcelona · 1 property
             </p>
           </Card>
+          </Reveal>
+          </Parallax>
         </div>
       </section>
 
@@ -455,8 +488,9 @@ export default function LandingPage() {
                 title: "Private by default",
                 body: "Guest sessions are scoped to a signed cookie, hosts only reach their own properties, and the Anthropic key never leaves the server.",
               },
-            ].map((item) => (
-              <div key={item.title} className="text-center">
+            ].map((item, i) => (
+              <Reveal key={item.title} delay={i * 100} y={24}>
+              <div className="text-center">
                 <span className="mx-auto grid size-11 place-items-center rounded-2xl bg-sand text-ink">
                   <item.icon className="size-5" strokeWidth={1.6} />
                 </span>
@@ -465,6 +499,7 @@ export default function LandingPage() {
                   {item.body}
                 </p>
               </div>
+              </Reveal>
             ))}
           </div>
 
@@ -488,7 +523,7 @@ export default function LandingPage() {
             aria-hidden="true"
             className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,#E22B4F_0%,rgba(226,43,79,0)_70%)] opacity-25"
           />
-          <div className="relative">
+          <Reveal className="relative" y={22} scale={0.985} blur={false}>
             <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-white/10 text-brand">
               <LogoMark className="size-7" />
             </span>
@@ -512,9 +547,9 @@ export default function LandingPage() {
               </Link>
             </div>
             <p className="mt-5 text-[11px] text-white/40">
-              Demo host: host@casabarcelona.demo · Concierge2026 (local mode)
+              Demo host: host@casabarcelona.demo · Concierge2026
             </p>
-          </div>
+          </Reveal>
         </div>
       </section>
 
