@@ -15,7 +15,7 @@ export const env = {
   // default because its free tier needs no card. Anthropic wins if both are set.
   aiApiKey: read("AI_API_KEY") || read("GROQ_API_KEY"),
   aiBaseUrl: read("AI_BASE_URL") || "https://api.groq.com/openai/v1",
-  aiModel: read("AI_MODEL") || "llama-3.3-70b-versatile",
+  aiModel: read("AI_MODEL") || "openai/gpt-oss-120b",
 
   supabaseUrl: read("SUPABASE_URL"),
   supabaseAnonKey: read("SUPABASE_ANON_KEY"),

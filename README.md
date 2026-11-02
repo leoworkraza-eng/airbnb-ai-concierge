@@ -220,7 +220,9 @@ differs, and Claude still wins if `ANTHROPIC_API_KEY` is also present.
 2. Set `AI_API_KEY` in `.env.local` (and in your host's environment for production).
 3. Restart. The concierge badge flips to “Concierge connected”.
 
-Defaults are Groq's `llama-3.3-70b-versatile` at `https://api.groq.com/openai/v1`.
-Override with `AI_BASE_URL` / `AI_MODEL` for Google AI Studio, OpenRouter or any
-compatible gateway. Free tiers are rate-limited, so the app's per-guest limit keeps
+Defaults are Groq's `openai/gpt-oss-120b` at `https://api.groq.com/openai/v1` —
+Groq retired `llama-3.3-70b-versatile` for free tier in August 2026, so if you
+see a "model does not exist" error, that name is the reason. Override with
+`AI_BASE_URL` / `AI_MODEL` for Google AI Studio, OpenRouter or any compatible
+gateway (`openai/gpt-oss-20b` is the lighter, higher-quota Groq option). Free tiers are rate-limited, so the app's per-guest limit keeps
 a demo from exhausting the quota.
