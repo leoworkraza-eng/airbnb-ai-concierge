@@ -208,3 +208,19 @@ End-to-end walkthrough (the eight demo scenes):
 The acceptance criteria in the product specification map directly onto this flow. Where
 an integration needs credentials that are not configured (Claude, Supabase, Google
 Places), the UI says so instead of simulating success.
+
+## Run the concierge for free (no card)
+
+Claude is optional. Any OpenAI-compatible chat API with tool calling can drive the
+concierge through the exact same tools and database writes — only the transport
+differs, and Claude still wins if `ANTHROPIC_API_KEY` is also present.
+
+1. Create a free key at [console.groq.com/keys](https://console.groq.com/keys) — no
+   card required.
+2. Set `AI_API_KEY` in `.env.local` (and in your host's environment for production).
+3. Restart. The concierge badge flips to “Concierge connected”.
+
+Defaults are Groq's `llama-3.3-70b-versatile` at `https://api.groq.com/openai/v1`.
+Override with `AI_BASE_URL` / `AI_MODEL` for Google AI Studio, OpenRouter or any
+compatible gateway. Free tiers are rate-limited, so the app's per-guest limit keeps
+a demo from exhausting the quota.

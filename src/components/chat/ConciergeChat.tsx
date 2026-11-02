@@ -70,7 +70,7 @@ export function ConciergeChat({
     if (!trimmed || sending) return;
     if (!claudeReady) {
       setError(
-        "The concierge isn't connected to Claude yet. Add ANTHROPIC_API_KEY to the server environment, then reload this page.",
+        "The concierge isn't connected to a model yet. Add a free AI_API_KEY (Groq or Google AI Studio) or ANTHROPIC_API_KEY to the server environment, then reload this page.",
       );
       return;
     }
@@ -300,8 +300,9 @@ export function ConciergeChat({
 
       {!claudeReady ? (
         <div className="border-t border-amber-200 bg-amber-50/80 px-4 py-2.5 text-[11.5px] text-amber-900 sm:px-5">
-          Configuration needed: set <code className="rounded bg-white/70 px-1">ANTHROPIC_API_KEY</code>{" "}
-          on the server to enable live replies.
+          Configuration needed: set a free <code className="rounded bg-white/70 px-1">AI_API_KEY</code>{" "}
+          or <code className="rounded bg-white/70 px-1">ANTHROPIC_API_KEY</code> on the server to
+          enable live replies.
         </div>
       ) : null}
 

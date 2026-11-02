@@ -18,10 +18,10 @@ import { ConciergeAvatar, Logo, LogoMark } from "@/components/brand";
 import { Card, Pill, SectionHeading } from "@/components/ui";
 import { Parallax, Reveal } from "@/components/motion";
 import { Disclaimer } from "@/components/guest/GuestShell";
-import { isClaudeConfigured, isSupabaseConfigured, storageMode } from "@/lib/env";
+import { isConciergeConfigured, isSupabaseConfigured, storageMode } from "@/lib/env";
 
 export default function LandingPage() {
-  const claudeReady = isClaudeConfigured;
+  const claudeReady = isConciergeConfigured;
 
   return (
     <div className="min-h-screen bg-cream">
@@ -110,8 +110,9 @@ export default function LandingPage() {
             {!claudeReady ? (
               <Reveal className="mt-6 max-w-lg" y={16} delay={340}>
                 <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-[12.5px] leading-relaxed text-amber-900">
-                  <strong className="font-semibold">Demo note:</strong> Claude is not
-                  connected yet. Add <code className="rounded bg-white/70 px-1">ANTHROPIC_API_KEY</code>{" "}
+                  <strong className="font-semibold">Demo note:</strong> no AI model is
+                  connected yet. Add a free <code className="rounded bg-white/70 px-1">AI_API_KEY</code>{" "}
+                  (Groq or Google AI Studio) or <code className="rounded bg-white/70 px-1">ANTHROPIC_API_KEY</code>{" "}
                   to <code className="rounded bg-white/70 px-1">.env.local</code> to enable
                   live concierge replies. Everything else — property data, tickets and
                   the host dashboard — already works.

@@ -1,9 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { runOpenAiConciergeTurn, runOpenAiSummary } from "../ai/openai-compat";
+import { ConciergeError, type TurnResult } from "../ai/shared";
 import type { Repository } from "../data/repo";
-import { env, isClaudeConfigured } from "../env";
+import { env, isClaudeConfigured, isOpenAiCompatibleConfigured } from "../env";
 import type { GuestSession, MaintenanceRequest, Message, Property, ToolEvent } from "../types";
 import { buildSystemPrompt } from "./prompt";
 import { executeTool, toolDefinitions } from "./tools";
+
+export { ConciergeError };
+export type { TurnResult };
 
 /* ---------------------------------------------------------------------------
    The concierge agent loop.
@@ -13,16 +18,6 @@ import { executeTool, toolDefinitions } from "./tools";
    until Claude produces a final answer. Only the guest-visible text is stored
    as a chat message; tool activity is stored alongside it for the transcript.
    --------------------------------------------------------------------------- */
-
-export class ConciergeError extends Error {
-  constructor(
-    readonly code: "not_configured" | "upstream" | "loop" | "empty",
-    message: string,
-  ) {
-    super(message);
-    this.name = "ConciergeError";
-  }
-}
 
 let cachedClient: Anthropic | null = null;
 
@@ -41,15 +36,24 @@ function getClient() {
   return cachedClient;
 }
 
-export type TurnResult = {
-  reply: string;
-  toolEvents: ToolEvent[];
-  ticket: MaintenanceRequest | null;
-};
-
 type ApiMessage = { role: "user" | "assistant"; content: unknown };
 
 export async function runConciergeTurn(args: {
+  repo: Repository;
+  property: Property;
+  guest: GuestSession;
+  conversationId: string;
+}): Promise<TurnResult> {
+  if (isClaudeConfigured) return runClaudeTurn(args);
+  if (isOpenAiCompatibleConfigured) return runOpenAiConciergeTurn(args);
+
+  throw new ConciergeError(
+    "not_configured",
+    "The concierge is not connected yet. Add a free AI_API_KEY (Groq or Google AI Studio) or ANTHROPIC_API_KEY.",
+  );
+}
+
+async function runClaudeTurn(args: {
   repo: Repository;
   property: Property;
   guest: GuestSession;
@@ -136,10 +140,10 @@ export async function generateConversationSummary(args: {
   guestName: string;
   messages: Message[];
 }) {
-  if (!isClaudeConfigured) {
+  if (!isClaudeConfigured && !isOpenAiCompatibleConfigured) {
     throw new ConciergeError(
       "not_configured",
-      "Summary generation needs ANTHROPIC_API_KEY to be configured.",
+      "Summary generation needs a tool-calling model: a free AI_API_KEY or ANTHROPIC_API_KEY.",
     );
   }
 
@@ -148,6 +152,10 @@ export async function generateConversationSummary(args: {
     .map((message) => `${message.role === "user" ? "Guest" : "Concierge"}: ${message.content}`)
     .join("\n\n")
     .slice(0, 12_000);
+
+  if (!isClaudeConfigured) {
+    return runOpenAiSummary(buildSummaryPromptText(args.propertyName, args.guestName, transcript));
+  }
 
   const client = getClient();
   const response = await client.messages.create({

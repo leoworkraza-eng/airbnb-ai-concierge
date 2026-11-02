@@ -14,7 +14,7 @@ import { ConciergeChat } from "@/components/chat/ConciergeChat";
 import { Card, Note, Pill } from "@/components/ui";
 import { getGuestContext } from "@/lib/guest-context";
 import { getGuestRepo } from "@/lib/data";
-import { isClaudeConfigured } from "@/lib/env";
+import { isConciergeConfigured } from "@/lib/env";
 import { statusLabels } from "@/lib/utils";
 
 export const metadata = { title: "Concierge" };
@@ -55,13 +55,13 @@ export default async function ConciergePage({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Pill tone={isClaudeConfigured ? "success" : "warning"}>
+          <Pill tone={isConciergeConfigured ? "success" : "warning"}>
             <span
               className={`size-1.5 rounded-full ${
-                isClaudeConfigured ? "bg-emerald-500" : "bg-amber-500"
+                isConciergeConfigured ? "bg-emerald-500" : "bg-amber-500"
               }`}
             />
-            {isClaudeConfigured ? "Claude connected" : "Claude not configured"}
+            {isConciergeConfigured ? "Concierge connected" : "Model not configured"}
           </Pill>
           <Pill tone="neutral">Response time ~4s</Pill>
         </div>
@@ -79,7 +79,7 @@ export default async function ConciergePage({
           propertyName={property.name}
           hostName={property.hostName}
           hostPhone={property.hostPhone}
-          claudeReady={isClaudeConfigured}
+          claudeReady={isConciergeConfigured}
           prefill={prompt?.slice(0, 300)}
         />
 

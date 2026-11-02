@@ -4,7 +4,7 @@ import { HostShell } from "@/components/host/HostShell";
 import { SettingsForm } from "@/components/host/SettingsForm";
 import { Card, EmptyState, Note, Pill } from "@/components/ui";
 import { getHostWorkspace, propertyName } from "@/lib/host-context";
-import { isClaudeConfigured } from "@/lib/env";
+import { isConciergeConfigured } from "@/lib/env";
 
 export const metadata = { title: "AI settings" };
 export const dynamic = "force-dynamic";
@@ -31,13 +31,13 @@ export default async function HostSettingsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Pill tone={isClaudeConfigured ? "success" : "warning"}>
+          <Pill tone={isConciergeConfigured ? "success" : "warning"}>
             <span
               className={`size-1.5 rounded-full ${
-                isClaudeConfigured ? "bg-emerald-500" : "bg-amber-500"
+                isConciergeConfigured ? "bg-emerald-500" : "bg-amber-500"
               }`}
             />
-            {isClaudeConfigured ? "Claude connected" : "Claude not configured"}
+            {isConciergeConfigured ? "Concierge connected" : "Model not configured"}
           </Pill>
           <Pill tone="neutral">Runs server-side</Pill>
           <Pill tone="neutral">Key never sent to the browser</Pill>
