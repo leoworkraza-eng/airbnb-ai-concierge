@@ -165,7 +165,8 @@ export default async function StayPage() {
         <div className="grid gap-5 lg:grid-cols-[1.55fr_1fr]">
           <div className="space-y-5">
             {/* Access */}
-            <Card className="p-5 sm:p-6">
+            <Card className="scroll-mt-28 p-5 sm:p-6" as="section">
+              <span id="access" className="block scroll-mt-28" />
               <div className="flex items-center gap-2.5">
                 <span className="grid size-8 place-items-center rounded-lg bg-brand-soft text-brand">
                   <KeyRound className="size-4" strokeWidth={1.8} />
@@ -265,6 +266,7 @@ export default async function StayPage() {
           <aside className="space-y-5">
             {/* Wi-Fi */}
             <Card className="overflow-hidden p-0">
+              <span id="wifi" className="block scroll-mt-28" />
               <div className="bg-ink px-5 py-4 text-cream">
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-2 text-[11px] tracking-wide text-white/60 uppercase">

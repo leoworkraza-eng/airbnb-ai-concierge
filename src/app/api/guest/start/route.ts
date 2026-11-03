@@ -10,7 +10,7 @@ import { todayISO } from "@/lib/utils";
 export async function GET(request: Request) {
   const existing = await getGuestContext();
   if (existing) {
-    return NextResponse.redirect(new URL("/stay", request.url));
+    return NextResponse.redirect(new URL("/welcome", request.url));
   }
 
   const repo = await getGuestRepo();
@@ -30,5 +30,5 @@ export async function GET(request: Request) {
   });
 
   await createGuestCookie(guest.id);
-  return NextResponse.redirect(new URL("/stay", request.url));
+  return NextResponse.redirect(new URL("/welcome", request.url));
 }

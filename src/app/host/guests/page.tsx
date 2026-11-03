@@ -45,6 +45,58 @@ export default async function HostGuestsPage() {
           </p>
         </div>
 
+        <Card className="p-5 sm:p-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <Sparkles className="size-4 text-brand" />
+            <h2 className="text-[15px] font-semibold">Guest preferences</h2>
+            <Pill tone="neutral">Only what the guest chose to share</Pill>
+          </div>
+          {guests.length === 0 ? (
+            <p className="mt-2 text-[12.5px] leading-relaxed text-muted">
+              No guests yet. Preferences appear here when a guest asks the concierge
+              to remember something.
+            </p>
+          ) : (
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+              {guests.map((stay) => (
+                <li
+                  key={stay.id}
+                  className="rounded-xl border border-line bg-cream/50 p-4"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[13px] font-medium">{stay.guestName}</p>
+                    <span className="text-[10.5px] text-muted">
+                      {formatDate(stay.checkInDate)} → {formatDate(stay.checkOutDate)}
+                    </span>
+                  </div>
+                  {stay.preferences.interests.length ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {stay.preferences.interests.map((interest) => (
+                        <Pill key={interest} tone="gold">
+                          {interest}
+                        </Pill>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-[11.5px] text-muted">
+                      No interests saved.
+                    </p>
+                  )}
+                  {stay.preferences.notes ? (
+                    <p className="mt-2 text-[11.5px] leading-relaxed text-ink-soft">
+                      {stay.preferences.notes}
+                    </p>
+                  ) : null}
+                  <p className="mt-2 text-[10px] text-muted">
+                    Consent {stay.preferences.consent ? "given" : "not given"} · guest
+                    can ask the concierge to forget this
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
         {entries.length === 0 ? (
           <EmptyState
             icon={<MessageSquare className="size-4" />}

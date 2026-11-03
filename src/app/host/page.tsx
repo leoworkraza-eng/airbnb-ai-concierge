@@ -83,7 +83,7 @@ export default async function HostOverviewPage() {
           <NewPropertyButton />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Stat
             label="Properties"
             value={properties.length}

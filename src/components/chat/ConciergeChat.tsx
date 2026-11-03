@@ -14,12 +14,15 @@ import { ConciergeAvatar, PulsingDots } from "@/components/brand";
 import type { ToolEvent } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+type TicketSummary = { code: string; priority: string; status: string };
+
 type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
   toolEvents: ToolEvent[];
   pending?: boolean;
+  ticket?: TicketSummary;
 };
 
 const suggestions = [
@@ -98,6 +101,7 @@ export function ConciergeChat({
 
       const data = (await response.json()) as {
         reply?: { id: string; content: string; toolEvents: ToolEvent[]; createdAt: string };
+        ticket?: TicketSummary;
         error?: string;
         code?: string;
       };
@@ -118,6 +122,7 @@ export function ConciergeChat({
           role: "assistant",
           content: reply.content,
           toolEvents: reply.toolEvents ?? [],
+          ticket: data.ticket,
         },
       ]);
     } catch (caught) {
@@ -148,7 +153,11 @@ export function ConciergeChat({
     <div className="surface surface-shadow flex h-[calc(100svh-16rem)] min-h-[520px] flex-col overflow-hidden">
       <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3.5 sm:px-5">
         <div className="flex items-center gap-3">
-          <ConciergeAvatar size="md" state={sending ? "thinking" : "idle"} />
+          <ConciergeAvatar
+            size="md"
+            state={sending ? "thinking" : "idle"}
+            className="avatar-breathe"
+          />
           <div>
             <p className="text-[14px] font-semibold leading-tight">Concierge</p>
             <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted">
@@ -168,7 +177,7 @@ export function ConciergeChat({
         aria-live="polite"
       >
         {messages.length === 0 ? (
-          <div className="flex items-start gap-3">
+          <div className="bubble-in flex items-start gap-3">
             <ConciergeAvatar size="md" />
             <div className="max-w-[88%] rounded-2xl rounded-tl-md border border-line bg-white px-4 py-3.5 text-[13.5px] leading-relaxed text-ink-soft">
               <p>
@@ -187,13 +196,13 @@ export function ConciergeChat({
         {messages.map((message) => (
           <div key={message.id}>
             {message.role === "user" ? (
-              <div className="flex justify-end">
+              <div className="bubble-in flex justify-end">
                 <p className="max-w-[85%] rounded-2xl rounded-br-md bg-ink px-4 py-2.5 text-[13.5px] leading-relaxed text-cream">
                   {message.content}
                 </p>
               </div>
             ) : (
-              <div className="flex items-start gap-2.5">
+              <div className="bubble-in flex items-start gap-2.5">
                 <ConciergeAvatar size="sm" />
                 <div className="min-w-0 max-w-[88%]">
                   <div className="rounded-2xl rounded-tl-md border border-line bg-white px-4 py-3.5 text-[13.5px] leading-relaxed whitespace-pre-wrap text-ink-soft">
@@ -225,6 +234,25 @@ export function ConciergeChat({
                       ))}
                     </div>
                   ) : null}
+                  {message.ticket ? (
+                    <div className="mt-2.5 rounded-2xl border border-brand/25 bg-brand-soft/60 px-4 py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="inline-flex items-center gap-1.5 text-[10.5px] font-semibold tracking-[0.12em] text-brand-dark uppercase">
+                          <Wrench className="size-3.5" /> Request filed
+                        </span>
+                        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-brand-dark">
+                          {message.ticket.status.replace("_", " ")}
+                        </span>
+                      </div>
+                      <p className="mt-1.5 font-mono text-[11px] text-muted">
+                        {message.ticket.code} · {message.ticket.priority} priority
+                      </p>
+                      <p className="mt-1 flex items-center gap-1.5 text-[10.5px] text-muted">
+                        <Check className="size-3 text-emerald-600" /> Saved to the host
+                        dashboard
+                      </p>
+                    </div>
+                  ) : null}
                   <div className="mt-1.5 flex items-center gap-3 pl-0.5">
                     <button
                       type="button"
@@ -249,7 +277,7 @@ export function ConciergeChat({
         ))}
 
         {sending ? (
-          <div className="flex items-start gap-2.5">
+          <div className="bubble-in flex items-start gap-2.5">
             <ConciergeAvatar size="sm" state="thinking" />
             <div className="rounded-2xl rounded-tl-md border border-line bg-white px-4 py-3">
               <PulsingDots />
@@ -305,6 +333,25 @@ export function ConciergeChat({
           enable live replies.
         </div>
       ) : null}
+
+      <div className="no-scrollbar flex gap-1.5 overflow-x-auto border-t border-line bg-cream/70 px-3 py-2 sm:px-4">
+        {[
+          "What's the Wi-Fi password?",
+          "What time is check-out?",
+          "How do I use the washing machine?",
+          "Something isn't working",
+        ].map((action) => (
+          <button
+            key={action}
+            type="button"
+            disabled={sending || !claudeReady}
+            onClick={() => void send(action)}
+            className="shrink-0 rounded-full border border-line bg-white px-3 py-1 text-[11px] text-ink-soft transition hover:border-ink/25 hover:bg-sand/50 disabled:opacity-50"
+          >
+            {action}
+          </button>
+        ))}
+      </div>
 
       <form
         className="flex items-end gap-2 border-t border-line bg-white px-3 py-3 sm:px-4"
