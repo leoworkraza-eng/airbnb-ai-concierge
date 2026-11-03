@@ -33,7 +33,7 @@ export function Reveal({
   delay = 0,
   y = 26,
   scale = 1,
-  blur = true,
+  blur = false,
   amount = 0.12,
 }: RevealProps) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -105,37 +105,73 @@ export function Parallax({
     const el = ref.current;
     if (!el || prefersReducedMotion()) return;
 
+    // Scroll-linked depth reads as jitter on a narrow screen, where the browser
+    // is already moving the page a few pixels at a time. Desktop only.
+    const wide = window.matchMedia("(min-width: 768px)");
+
     let frame = 0;
     let lastOffset = 0;
+    let visible = true;
+
+    const clear = () => {
+      if (lastOffset === 0) return;
+      lastOffset = 0;
+      el.style.transform = "";
+    };
 
     const update = () => {
       frame = 0;
+      if (!visible || !wide.matches) {
+        clear();
+        return;
+      }
+
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight || 1;
       const center = rect.top + rect.height / 2;
       const progress = (vh / 2 - center) / vh;
 
-      if (Math.abs(progress) > 1.3) return;
+      if (Math.abs(progress) > 1.3) {
+        clear();
+        return;
+      }
 
-      const raw = progress * speed * 100;
-      const offset = Math.max(-maxOffset, Math.min(maxOffset, raw));
+      // Whole pixels only: fractional offsets shimmer while the page scrolls.
+      const offset = Math.round(
+        Math.max(-maxOffset, Math.min(maxOffset, progress * speed * 100)),
+      );
 
-      if (Math.abs(offset - lastOffset) < 0.1) return;
+      if (offset === lastOffset) return;
       lastOffset = offset;
-      el.style.transform = `translate3d(0, ${offset.toFixed(2)}px, 0)`;
+      el.style.transform = offset === 0 ? "" : `translate3d(0, ${offset}px, 0)`;
     };
 
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(update);
     };
 
+    const observer =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(
+            (entries) => {
+              visible = entries[0]?.isIntersecting ?? true;
+              schedule();
+            },
+            { rootMargin: "10% 0px" },
+          );
+
+    observer?.observe(el);
     update();
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
+    wide.addEventListener("change", schedule);
 
     return () => {
+      observer?.disconnect();
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
+      wide.removeEventListener("change", schedule);
       if (frame) cancelAnimationFrame(frame);
     };
   }, [speed, maxOffset]);

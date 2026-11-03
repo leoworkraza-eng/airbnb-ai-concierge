@@ -52,26 +52,12 @@ export function CinematicHero() {
     );
     observer.observe(scene);
 
-    // Slow vertical drift on scroll — the parallax the scene is built around.
-    let frame = 0;
-    const onScroll = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        const offset = Math.min(window.scrollY, window.innerHeight) * 0.18;
-        scene.style.setProperty("--scene-shift", `${offset.toFixed(1)}px`);
-      });
-    };
-
     document.addEventListener("visibilitychange", sync);
-    window.addEventListener("scroll", onScroll, { passive: true });
     sync();
 
     return () => {
       observer.disconnect();
       document.removeEventListener("visibilitychange", sync);
-      window.removeEventListener("scroll", onScroll);
-      if (frame) cancelAnimationFrame(frame);
     };
   }, []);
 
@@ -86,7 +72,7 @@ export function CinematicHero() {
           "absolute inset-0 -z-10 h-full w-full object-cover transition-opacity duration-1000",
           ready ? "opacity-100" : "opacity-0",
         )}
-        style={{ transform: "translate3d(0, calc(var(--scene-shift, 0px) * -1), 0) scale(1.06)" }}
+        style={{ transform: "scale(1.06)" }}
         src="/media/hero.mp4"
         poster="/media/hero-poster.jpg"
         preload="metadata"
