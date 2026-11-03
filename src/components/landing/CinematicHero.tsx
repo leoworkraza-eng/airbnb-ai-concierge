@@ -87,6 +87,7 @@ export function CinematicHero() {
           ready ? "opacity-100" : "opacity-0",
         )}
         style={{ transform: "translate3d(0, calc(var(--scene-shift, 0px) * -1), 0) scale(1.06)" }}
+        src="/media/hero.mp4"
         poster="/media/hero-poster.jpg"
         preload="metadata"
         autoPlay
