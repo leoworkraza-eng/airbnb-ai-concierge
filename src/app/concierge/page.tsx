@@ -55,13 +55,13 @@ export default async function ConciergePage({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Pill tone={isConciergeConfigured ? "success" : "warning"}>
+          <Pill tone={isConciergeConfigured ? "success" : "neutral"}>
             <span
               className={`size-1.5 rounded-full ${
-                isConciergeConfigured ? "bg-emerald-500" : "bg-amber-500"
+                isConciergeConfigured ? "bg-emerald-500" : "bg-ink/35"
               }`}
             />
-            {isConciergeConfigured ? "Concierge connected" : "Model not configured"}
+            {isConciergeConfigured ? "Concierge connected" : "Guided mode"}
           </Pill>
           <Pill tone="neutral">Response time ~4s</Pill>
         </div>

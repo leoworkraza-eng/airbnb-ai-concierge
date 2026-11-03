@@ -71,12 +71,6 @@ export function ConciergeChat({
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
-    if (!claudeReady) {
-      setError(
-        "The concierge isn't connected to a model yet. Add a free AI_API_KEY (Groq or Google AI Studio) or ANTHROPIC_API_KEY to the server environment, then reload this page.",
-      );
-      return;
-    }
 
     setError(null);
     setSending(true);
@@ -167,7 +161,8 @@ export function ConciergeChat({
           </div>
         </div>
         <span className="hidden items-center gap-1.5 rounded-full border border-line bg-cream px-2.5 py-1 text-[10.5px] text-muted sm:inline-flex">
-          <Sparkles className="size-3 text-brand" /> Claude
+          <Sparkles className="size-3 text-brand" />
+          {claudeReady ? "Model connected" : "Guided mode"}
         </span>
       </div>
 
@@ -327,10 +322,11 @@ export function ConciergeChat({
       ) : null}
 
       {!claudeReady ? (
-        <div className="border-t border-amber-200 bg-amber-50/80 px-4 py-2.5 text-[11.5px] text-amber-900 sm:px-5">
-          Configuration needed: set a free <code className="rounded bg-white/70 px-1">AI_API_KEY</code>{" "}
-          or <code className="rounded bg-white/70 px-1">ANTHROPIC_API_KEY</code> on the server to
-          enable live replies.
+        <div className="border-t border-line bg-cream/80 px-4 py-2.5 text-[11px] leading-relaxed text-muted sm:px-5">
+          <strong className="font-semibold text-ink-soft">Guided mode.</strong> Replies
+          are assembled from this property&rsquo;s record, the city guide and real ticket
+          writes — no language model is connected. Add a free{" "}
+          <code className="rounded bg-white px-1">AI_API_KEY</code> for free-form answers.
         </div>
       ) : null}
 
@@ -344,7 +340,7 @@ export function ConciergeChat({
           <button
             key={action}
             type="button"
-            disabled={sending || !claudeReady}
+            disabled={sending}
             onClick={() => void send(action)}
             className="shrink-0 rounded-full border border-line bg-white px-3 py-1 text-[11px] text-ink-soft transition hover:border-ink/25 hover:bg-sand/50 disabled:opacity-50"
           >
@@ -376,13 +372,13 @@ export function ConciergeChat({
           }}
           rows={1}
           maxLength={1500}
-          placeholder={claudeReady ? "Ask anything about your stay…" : "Concierge offline — API key required"}
-          disabled={sending || !claudeReady}
+          placeholder="Ask anything about your stay…"
+          disabled={sending}
           className="max-h-32 min-h-[42px] flex-1 resize-none rounded-2xl border border-line bg-cream px-4 py-2.5 text-[13.5px] leading-relaxed text-ink outline-none transition placeholder:text-muted/70 focus:border-ink/25 focus:bg-white focus:ring-4 focus:ring-ink/5 disabled:opacity-60"
         />
         <button
           type="submit"
-          disabled={sending || !input.trim() || !claudeReady}
+          disabled={sending || !input.trim()}
           className="grid size-[42px] shrink-0 place-items-center rounded-full bg-brand text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40"
           aria-label="Send message"
         >

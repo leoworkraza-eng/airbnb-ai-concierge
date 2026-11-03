@@ -4,7 +4,6 @@ import { getGuestRepo } from "@/lib/data";
 import { getGuestContext } from "@/lib/guest-context";
 import { ConciergeError, runConciergeTurn } from "@/lib/claude/agent";
 import { rateLimit } from "@/lib/rate-limit";
-import { isConciergeConfigured } from "@/lib/env";
 
 const bodySchema = z.object({
   message: z.string().trim().min(1, "Please write a message.").max(1500),
@@ -26,17 +25,6 @@ export async function POST(request: Request) {
         error: `You're sending messages quickly. Please wait ${limit.retryAfter}s before trying again.`,
       },
       { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
-    );
-  }
-
-  if (!isConciergeConfigured) {
-    return NextResponse.json(
-      {
-        error:
-          "The concierge is not connected to a model yet. Add a free AI_API_KEY (Groq or Google AI Studio) or ANTHROPIC_API_KEY to the server environment to enable live answers.",
-        code: "claude_not_configured",
-      },
-      { status: 503 },
     );
   }
 
@@ -103,7 +91,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "The concierge can't reach Claude right now. Your message was saved — you can retry, report the issue in Support, or contact your host directly.",
+          "The concierge can't reach its model right now. Your message was saved — you can retry, report the issue in Support, or contact your host directly.",
         code: "upstream_error",
       },
       { status: 502 },

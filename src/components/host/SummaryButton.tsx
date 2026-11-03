@@ -38,7 +38,7 @@ export function SummaryButton({ conversationId }: { conversationId: string }) {
         ) : (
           <Sparkles className="size-3.5 text-brand" />
         )}
-        {loading ? "Summarising…" : "Generate AI summary"}
+        {loading ? "Summarising…" : "Generate summary"}
       </button>
       {error ? <p className="mt-1.5 text-[11px] text-red-700">{error}</p> : null}
     </div>

@@ -433,12 +433,12 @@ export default function LandingPage() {
 
           {!claudeReady ? (
             <div className="mx-auto mt-9 max-w-xl rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-[12.5px] leading-relaxed text-amber-900">
-              <strong className="font-semibold">Demo note:</strong> no AI model is
-              connected yet. Add a free <code className="rounded bg-white/70 px-1">AI_API_KEY</code>{" "}
-              (Groq or Google AI Studio) or{" "}
-              <code className="rounded bg-white/70 px-1">ANTHROPIC_API_KEY</code> to the
-              server environment. Everything else — property data, tickets and the host
-              dashboard — already works.
+              <strong className="font-semibold">Guided mode:</strong> with no model key
+              connected, the concierge still answers from the property record, the city
+              guide and real ticket writes. Add a free{" "}
+              <code className="rounded bg-white/70 px-1">AI_API_KEY</code> (Groq or Google
+              AI Studio) or <code className="rounded bg-white/70 px-1">ANTHROPIC_API_KEY</code>{" "}
+              for free-form conversation on top.
             </div>
           ) : null}
 

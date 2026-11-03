@@ -20,6 +20,7 @@ Built with **Next.js 16 (App Router) + TypeScript + Tailwind CSS 4**, **Claude**
 | Guest demo | One click creates a stay on the demo property and sets a signed cookie. No signup. |
 | My stay | Check-in/out steps, Wi-Fi with copy button, house rules, appliance guides, amenities, emergency info, FAQs, host contact — all from the database. |
 | Concierge | Real Claude Messages API call with a tailored system prompt, conversation history and five tools. |
+| Guided mode | With no model key at all, the concierge still works: a deterministic agent answers from the same property record and curated guide, and files real tickets with a confirmation step. It is labelled “Guided mode” in the UI and never claims to be a language model. |
 | Tool: `get_property_information` | Reads the verified property record. The prompt contains **no** property facts, so the model must call this tool. |
 | Tool: `create_maintenance_request` | Writes a genuine ticket + host notification, returns the real ticket code and priority. |
 | Tool: `save_guest_preferences` | Stores interests/notes only after explicit guest consent. |
@@ -136,8 +137,12 @@ The system prompt (`src/lib/claude/prompt.ts`) enforces:
 * emergencies to 112 before anything else;
 * host tone/service settings that cannot weaken safety, honesty or privacy.
 
-If the key is missing the chat shows a configuration notice instead of pretending; if
-Claude fails, the guest sees a clear error plus the host's phone number.
+If no key is configured, the route falls back to **guided mode**
+(`src/lib/concierge/guided.ts`): a deterministic agent that uses the same tools, quotes
+only the host's record, asks for confirmation before filing a ticket, and says when
+something is not in the record. The UI labels it as guided mode, so nothing pretends a
+model is answering. If a configured model fails, the guest sees a clear error plus the
+host's phone number.
 
 ---
 

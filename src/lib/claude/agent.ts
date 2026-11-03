@@ -4,6 +4,7 @@ import { ConciergeError, type TurnResult } from "../ai/shared";
 import type { Repository } from "../data/repo";
 import { env, isClaudeConfigured, isOpenAiCompatibleConfigured } from "../env";
 import type { GuestSession, MaintenanceRequest, Message, Property, ToolEvent } from "../types";
+import { guidedConversationSummary, runGuidedTurn } from "../concierge/guided";
 import { buildSystemPrompt } from "./prompt";
 import { executeTool, toolDefinitions } from "./tools";
 
@@ -47,10 +48,9 @@ export async function runConciergeTurn(args: {
   if (isClaudeConfigured) return runClaudeTurn(args);
   if (isOpenAiCompatibleConfigured) return runOpenAiConciergeTurn(args);
 
-  throw new ConciergeError(
-    "not_configured",
-    "The concierge is not connected yet. Add a free AI_API_KEY (Groq or Google AI Studio) or ANTHROPIC_API_KEY.",
-  );
+  // No model configured: answer from the same record with the same tools, so
+  // the product works end-to-end instead of dead-ending at its main screen.
+  return runGuidedTurn(args);
 }
 
 async function runClaudeTurn(args: {
@@ -141,10 +141,7 @@ export async function generateConversationSummary(args: {
   messages: Message[];
 }) {
   if (!isClaudeConfigured && !isOpenAiCompatibleConfigured) {
-    throw new ConciergeError(
-      "not_configured",
-      "Summary generation needs a tool-calling model: a free AI_API_KEY or ANTHROPIC_API_KEY.",
-    );
+    return guidedConversationSummary(args);
   }
 
   const transcript = args.messages
