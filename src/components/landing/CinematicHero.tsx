@@ -1,89 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ArrowDown, ArrowUpRight, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /* ---------------------------------------------------------------------------
    Full-screen opening scene.
 
-   The video is muted, inline, looped and only ever plays while it is on screen;
-   it pauses for `prefers-reduced-motion`, when the tab is hidden, and when it
-   scrolls out of view. The poster frame is served first, so the first paint is
-   an image, never an empty black box.
+   The movement is one photograph on a very slow push-in, animated with a CSS
+   transform. The GPU composites a transform, so the motion is smooth at any
+   frame rate and any viewport size — no video to decode, resample or step.
+   It stops entirely for `prefers-reduced-motion`.
    --------------------------------------------------------------------------- */
 
 export function CinematicHero() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const sceneRef = useRef<HTMLDivElement | null>(null);
   const [leaving, setLeaving] = useState(false);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    const scene = sceneRef.current;
-    if (!video || !scene) return;
-
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      video.pause();
-      return;
-    }
-
-    let visible = true;
-
-    const sync = () => {
-      if (!visible || document.hidden) {
-        video.pause();
-      } else {
-        void video.play().catch(() => {
-          /* Autoplay refusal leaves the poster frame in place. */
-        });
-      }
-    };
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        visible = entries[0]?.isIntersecting ?? true;
-        sync();
-      },
-      { threshold: 0.05 },
-    );
-    observer.observe(scene);
-
-    document.addEventListener("visibilitychange", sync);
-    sync();
-
-    return () => {
-      observer.disconnect();
-      document.removeEventListener("visibilitychange", sync);
-    };
-  }, []);
 
   return (
-    <div
-      ref={sceneRef}
-      className="relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-ink"
-    >
-      <video
-        ref={videoRef}
-        className={cn(
-          "absolute inset-0 -z-10 h-full w-full object-cover transition-opacity duration-1000",
-          ready ? "opacity-100" : "opacity-0",
-        )}
-        style={{ transform: "scale(1.06)" }}
-        src="/media/hero.mp4"
-        poster="/media/hero-poster.jpg"
-        preload="metadata"
-        autoPlay
-        muted
-        loop
-        playsInline
-        disablePictureInPicture
+    <div className="relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-ink">
+      <img
+        src="/media/eixample-street.jpg"
+        alt=""
         aria-hidden="true"
-        tabIndex={-1}
-        onCanPlay={() => setReady(true)}
+        fetchPriority="high"
+        decoding="async"
+        className="hero-scene-media absolute inset-0 -z-10 h-full w-full object-cover"
       />
 
       {/* Legibility + warmth. Two layers so the type stays crisp on bright frames. */}

@@ -175,6 +175,25 @@
   animation-delay: 160ms;
 }
 
+/* The opening scene: one photograph on a very slow push-in. Only a transform
+   is animated, so the compositor moves the already-decoded image — the motion
+   stays smooth at every viewport size, with no frames to step or resample. */
+@keyframes hero-push {
+  from {
+    transform: scale(1.015);
+  }
+  to {
+    transform: scale(1.09);
+  }
+}
+
+.hero-scene-media {
+  transform-origin: 50% 45%;
+  animation: hero-push 38s ease-in-out infinite alternate;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
 /* Page-level entrance used by the guest shell. */
 @keyframes page-enter {
   from {
@@ -358,5 +377,10 @@
     animation: none;
     opacity: 1;
     transform: none;
+  }
+
+  .hero-scene-media {
+    animation: none;
+    transform: scale(1.015);
   }
 }

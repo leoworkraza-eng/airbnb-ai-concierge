@@ -17,8 +17,6 @@ fictional property, not photographs of the apartment described in the app.
 | tapas.jpg | Tapas bar in Barcelona | HakanGonenli | CC BY-SA 3.0 |
 | montjuic.jpg | Jardins de Joan Brossa, Montjuïc | Txllxt TxllxT | CC BY-SA 4.0 |
 | batllo.jpg | Casa Batlló 01 | Bernard Gagnon | CC BY-SA 3.0 |
-| hero.mp4 | Derived from eixample-street, rooftop and interior | as above | as above |
-| hero-poster.jpg | Frame from hero.mp4 | as above | as above |
 
 Licence texts: CC0 1.0, CC BY-SA 3.0 and CC BY-SA 4.0. Each source file is
 linked in-app from the photography credits panel in the landing page footer.
