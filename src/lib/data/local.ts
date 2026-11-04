@@ -5,6 +5,7 @@ import type {
   Conversation,
   GuestPreferences,
   GuestSession,
+  HostIntegration,
   MaintenanceRequest,
   MaintenanceStatus,
   Message,
@@ -12,8 +13,10 @@ import type {
   Profile,
   Property,
   PropertyInput,
+  Reservation,
   ToolEvent,
 } from "../types";
+import { newReservationCode, statusForDates } from "../reservations";
 import {
   DEMO_HOST,
   DEMO_PROPERTY_ID,
@@ -24,6 +27,8 @@ import {
   newTicketCode,
   type CreateGuestSessionInput,
   type CreateRequestInput,
+  type CreateReservationInput,
+  type IntegrationPatch,
   type Repository,
 } from "./repo";
 
@@ -37,6 +42,10 @@ import {
    pretending to save data.
    --------------------------------------------------------------------------- */
 
+type LocalIntegration = HostIntegration & {
+  credentials?: { clientId: string; clientSecret: string };
+};
+
 type LocalDb = {
   version: 1;
   profiles: Profile[];
@@ -46,6 +55,8 @@ type LocalDb = {
   messages: Message[];
   maintenanceRequests: MaintenanceRequest[];
   notifications: Notification[];
+  reservations: Reservation[];
+  integrations: LocalIntegration[];
 };
 
 const DATA_DIR = process.env.LOCAL_DATA_DIR || path.join(process.cwd(), ".data");
@@ -159,6 +170,60 @@ function seedDb(): LocalDb {
     },
   ];
 
+  const reservations: Reservation[] = [
+    {
+      id: "reservation-ana",
+      code: "CB-7K2PA",
+      propertyId: property.id,
+      guestSessionId: guestSessions[0].id,
+      guestName: guestSessions[0].guestName,
+      guestEmail: "ana.ruiz@example.com",
+      checkInDate: guestSessions[0].checkInDate,
+      checkOutDate: guestSessions[0].checkOutDate,
+      guests: 2,
+      status: "in_house",
+      source: "demo",
+      externalId: null,
+      notes: "Travelling with her sister. Prefers quiet mornings.",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+      updatedAt: now,
+    },
+    {
+      id: "reservation-thomas",
+      code: "CB-3B9RM",
+      propertyId: property.id,
+      guestSessionId: guestSessions[1].id,
+      guestName: guestSessions[1].guestName,
+      guestEmail: "t.keller@example.com",
+      checkInDate: guestSessions[1].checkInDate,
+      checkOutDate: guestSessions[1].checkOutDate,
+      guests: 1,
+      status: "upcoming",
+      source: "demo",
+      externalId: null,
+      notes: "",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(),
+      updatedAt: now,
+    },
+    {
+      id: "reservation-open",
+      code: newReservationCode("demo"),
+      propertyId: property.id,
+      guestSessionId: null,
+      guestName: "Next guest",
+      guestEmail: "",
+      checkInDate: todayISO(0),
+      checkOutDate: todayISO(4),
+      guests: 2,
+      status: "upcoming",
+      source: "demo",
+      externalId: null,
+      notes: "Unassigned demo reservation, claimed by the next guest session.",
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+
   const notifications: Notification[] = [
     {
       id: "note-1",
@@ -197,6 +262,8 @@ function seedDb(): LocalDb {
     messages,
     maintenanceRequests,
     notifications,
+    reservations,
+    integrations: [],
   };
 }
 
@@ -213,6 +280,9 @@ async function load(): Promise<LocalDb> {
   try {
     const raw = await fs.readFile(DATA_FILE, "utf8");
     const parsed = JSON.parse(raw) as LocalDb;
+    // Stores written before reservations existed are upgraded in place.
+    parsed.reservations ??= [];
+    parsed.integrations ??= [];
     globalThis.__conciergeLocalDb = parsed;
     return parsed;
   } catch {
@@ -238,6 +308,12 @@ async function mutate<T>(fn: (db: LocalDb) => T): Promise<T> {
 }
 
 const clone = <T,>(value: T): T => structuredClone(value);
+
+/** Integration rows never leave the data layer with their credentials attached. */
+function safeIntegration(row: LocalIntegration): HostIntegration {
+  const { credentials, ...rest } = row;
+  return clone({ ...rest, hasCredentials: Boolean(credentials?.clientSecret) });
+}
 
 export class LocalRepository implements Repository {
   readonly mode = "local" as const;
@@ -499,6 +575,170 @@ export class LocalRepository implements Repository {
       db.notifications.forEach((n) => {
         if (n.hostId === hostId) n.read = true;
       });
+    });
+  }
+
+  async listReservations(propertyIds: string[]) {
+    const db = await load();
+    return db.reservations
+      .filter((reservation) => propertyIds.includes(reservation.propertyId))
+      .sort((a, b) => a.checkInDate.localeCompare(b.checkInDate))
+      .map(clone);
+  }
+
+  async getReservation(id: string) {
+    const db = await load();
+    const found = db.reservations.find((reservation) => reservation.id === id);
+    return found ? clone(found) : null;
+  }
+
+  async getReservationForGuest(guestSessionId: string) {
+    const db = await load();
+    const found = db.reservations.find(
+      (reservation) => reservation.guestSessionId === guestSessionId,
+    );
+    return found ? clone(found) : null;
+  }
+
+  async createReservation(hostId: string, input: CreateReservationInput) {
+    return mutate((db) => {
+      const property = db.properties.find(
+        (candidate) => candidate.id === input.propertyId && candidate.hostId === hostId,
+      );
+      if (!property) throw new Error("That property isn't on this account.");
+
+      const now = new Date().toISOString();
+      const reservation: Reservation = {
+        id: crypto.randomUUID(),
+        code: input.code ?? newReservationCode(input.source ?? "manual"),
+        propertyId: input.propertyId,
+        guestSessionId: input.guestSessionId ?? null,
+        guestName: input.guestName,
+        guestEmail: input.guestEmail ?? "",
+        checkInDate: input.checkInDate,
+        checkOutDate: input.checkOutDate,
+        guests: input.guests,
+        status: input.status ?? "upcoming",
+        source: input.source ?? "manual",
+        externalId: input.externalId ?? null,
+        notes: input.notes ?? "",
+        createdAt: now,
+        updatedAt: now,
+      };
+      db.reservations.push(reservation);
+      return clone(reservation);
+    });
+  }
+
+  async updateReservationStatus(
+    id: string,
+    status: Reservation["status"],
+    propertyIds: string[],
+  ) {
+    return mutate((db) => {
+      const reservation = db.reservations.find(
+        (candidate) => candidate.id === id && propertyIds.includes(candidate.propertyId),
+      );
+      if (!reservation) return null;
+      reservation.status = status;
+      reservation.updatedAt = new Date().toISOString();
+      return clone(reservation);
+    });
+  }
+
+  async linkReservationToGuest(propertyId: string, guest: GuestSession) {
+    return mutate((db) => {
+      const existing = db.reservations.find(
+        (reservation) => reservation.guestSessionId === guest.id,
+      );
+      if (existing) return clone(existing);
+
+      const open = db.reservations.find(
+        (reservation) =>
+          reservation.propertyId === propertyId &&
+          !reservation.guestSessionId &&
+          (reservation.status === "upcoming" || reservation.status === "in_house"),
+      );
+
+      if (open) {
+        open.guestSessionId = guest.id;
+        open.guestName = guest.guestName;
+        open.checkInDate = guest.checkInDate;
+        open.checkOutDate = guest.checkOutDate;
+        open.status = statusForDates(guest.checkInDate, guest.checkOutDate, todayISO(0));
+        open.updatedAt = new Date().toISOString();
+        return clone(open);
+      }
+
+      const now = new Date().toISOString();
+      const reservation: Reservation = {
+        id: crypto.randomUUID(),
+        code: newReservationCode("demo"),
+        propertyId,
+        guestSessionId: guest.id,
+        guestName: guest.guestName,
+        guestEmail: "",
+        checkInDate: guest.checkInDate,
+        checkOutDate: guest.checkOutDate,
+        guests: 2,
+        status: statusForDates(guest.checkInDate, guest.checkOutDate, todayISO(0)),
+        source: "demo",
+        externalId: null,
+        notes: "Created for the demo guest session.",
+        createdAt: now,
+        updatedAt: now,
+      };
+      db.reservations.push(reservation);
+      return clone(reservation);
+    });
+  }
+
+  async getIntegration(hostId: string) {
+    const db = await load();
+    const found = db.integrations.find(
+      (integration) => integration.hostId === hostId && integration.provider === "airbnb",
+    );
+    return found ? safeIntegration(found) : null;
+  }
+
+  async saveIntegration(hostId: string, patch: IntegrationPatch) {
+    return mutate((db) => {
+      const now = new Date().toISOString();
+      let row = db.integrations.find(
+        (integration) => integration.hostId === hostId && integration.provider === "airbnb",
+      );
+
+      if (!row) {
+        row = {
+          id: crypto.randomUUID(),
+          hostId,
+          provider: "airbnb",
+          status: "not_connected",
+          mode: "oauth",
+          accountRef: "",
+          hasCredentials: false,
+          lastSyncAt: null,
+          lastError: "",
+          events: [],
+          createdAt: now,
+          updatedAt: now,
+        };
+        db.integrations.push(row);
+      }
+
+      if (patch.status !== undefined) row.status = patch.status;
+      if (patch.mode !== undefined) row.mode = patch.mode;
+      if (patch.accountRef !== undefined) row.accountRef = patch.accountRef;
+      if (patch.lastSyncAt !== undefined) row.lastSyncAt = patch.lastSyncAt;
+      if (patch.lastError !== undefined) row.lastError = patch.lastError;
+      if (patch.events !== undefined) row.events = patch.events.slice(0, 20);
+      if (patch.credentials !== undefined) {
+        row.credentials = patch.credentials ?? undefined;
+        row.hasCredentials = Boolean(patch.credentials);
+      }
+
+      row.updatedAt = now;
+      return safeIntegration(row);
     });
   }
 

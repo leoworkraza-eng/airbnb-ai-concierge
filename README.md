@@ -29,7 +29,9 @@ Built with **Next.js 16 (App Router) + TypeScript + Tailwind CSS 4**, **Claude**
 | Explore | Filterable Barcelona guide, clearly labelled as curated demonstration data. |
 | Support | Guest-facing request form, emergency escalation to 112, and a list of that guest's tickets. |
 | Host auth | Supabase email/password when configured, otherwise a documented demo host account. |
-| Host overview | Properties, current guests, open requests, unread notifications, recent interactions. |
+| Host overview | Properties, current guests, next arrivals, open requests, unread notifications, recent interactions. |
+| Reservations | Per-property stays with an explicit source label (`manual`, `demo`, or `airbnb`), inline status changes and a link to the guest session. New stays can be added by hand and are validated server-side. |
+| Airbnb connection | Connection state, server-side credential storage, a sync log and honest failure messages. There is no live Airbnb access: the API is partner-only, so nothing is ever presented as imported. |
 | Property management | Add/edit the complete property record that the concierge answers from. |
 | Maintenance | All tickets with filters, priority and inline status changes (New → In progress → Resolved). |
 | Guest interactions | Transcript review plus on-demand Claude summaries stored in the database. |
@@ -98,11 +100,27 @@ A matching `profiles` row is created automatically on first sign-in.
 1. Create a project at <https://supabase.com>.
 2. Open **SQL Editor** and run [`supabase/schema.sql`](supabase/schema.sql). This creates
    all seven tables, indexes, the `updated_at` triggers and Row Level Security policies.
-3. Copy the project URL, anon key and service-role key into `.env.local`.
-4. Create a host user in **Authentication → Users** (or use the sign-up flow of your
+3. In the same SQL editor, run
+   [`supabase/migrations/2026-11-reservations-and-integrations.sql`](supabase/migrations/2026-11-reservations-and-integrations.sql).
+   It is additive: it creates the `reservations` and `integrations` tables with
+   host-scoped RLS and leaves existing data untouched. Until it is applied the app still
+   runs — reservation screens show a migration notice and the guest page omits the
+   reservation card.
+4. Copy the project URL, anon key and service-role key into `.env.local`.
+5. Create a host user in **Authentication → Users** (or use the sign-up flow of your
    choice), then sign in at `/host/login`. The first sign-in creates the profile row, and
    a starter property (Casa Barcelona) is seeded so the demo works immediately.
-5. Keep `.data/` out of version control (already ignored) and never commit `.env.local`.
+6. Keep `.data/` out of version control (already ignored) and never commit `.env.local`.
+
+### Where reservation data comes from
+
+Every reservation row carries a source, shown in the host UI and on the guest page:
+
+* **Added by host** — created in `/host/reservations/new`, stored in your database.
+* **Demo data** — the sample stays seeded with the demo property, plus the stay a guest
+  demo session claims.
+* **Airbnb** — reserved for an approved integration. This app never writes it, because
+  it has no authorised Airbnb transport, and it does not scrape the site.
 
 ### Access control
 
@@ -209,6 +227,11 @@ End-to-end walkthrough (the eight demo scenes):
 7. Sign in at `/host/login` with the demo host account → the ticket appears under
    **Maintenance** with its code, priority and status; change its status.
 8. Open **Guest interactions** → generate an AI summary of the conversation.
+9. Open **Reservations** → the demo stays are labelled *Demo data*; add one by hand and
+   change its status. It appears on the guest welcome page once a guest session claims it.
+10. Open **Airbnb connection** → save dummy credentials (stored server-side), enable the
+    demo connection, and press **Attempt sync**. It fails with a written reason and the
+    attempt is recorded in the sync log — nothing is imported.
 
 The acceptance criteria in the product specification map directly onto this flow. Where
 an integration needs credentials that are not configured (Claude, Supabase, Google

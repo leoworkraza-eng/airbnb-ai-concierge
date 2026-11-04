@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Building2,
+  CalendarDays,
   LayoutDashboard,
+  Link2,
   LogOut,
   MessageSquare,
   Settings,
@@ -14,9 +16,11 @@ import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/host", label: "Overview", icon: LayoutDashboard, exact: true },
+  { href: "/host/reservations", label: "Reservations", icon: CalendarDays },
   { href: "/host/properties", label: "Properties", icon: Building2 },
   { href: "/host/maintenance", label: "Maintenance", icon: Wrench },
   { href: "/host/guests", label: "Guest interactions", icon: MessageSquare },
+  { href: "/host/integrations", label: "Airbnb connection", icon: Link2 },
   { href: "/host/settings", label: "AI settings", icon: Settings },
 ];
 

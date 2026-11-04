@@ -131,6 +131,68 @@ export type HostSession = {
   mode: "supabase" | "local";
 };
 
+/* ------------------------------------------------------------- RESERVATIONS */
+
+export type ReservationStatus = "upcoming" | "in_house" | "completed" | "cancelled";
+
+/**
+ * Where a reservation row came from.
+ * `airbnb` is reserved for rows written by an authorised integration — nothing
+ * in this prototype writes it, so the UI never presents demo rows as Airbnb data.
+ */
+export type ReservationSource = "airbnb" | "manual" | "demo";
+
+export type Reservation = {
+  id: string;
+  code: string;
+  propertyId: string;
+  guestSessionId: string | null;
+  guestName: string;
+  guestEmail: string;
+  checkInDate: string;
+  checkOutDate: string;
+  guests: number;
+  status: ReservationStatus;
+  source: ReservationSource;
+  externalId: string | null;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/* --------------------------------------------------------------- INTEGRATIONS */
+
+export type IntegrationStatus =
+  | "not_connected"
+  | "demo"
+  | "pending_verification"
+  | "connected"
+  | "error";
+
+export type IntegrationMode = "oauth" | "manual" | "demo";
+
+export type IntegrationEvent = {
+  at: string;
+  kind: "info" | "sync" | "error";
+  message: string;
+};
+
+/** The public shape of an integration record. Credentials are never part of it. */
+export type HostIntegration = {
+  id: string;
+  hostId: string;
+  provider: "airbnb";
+  status: IntegrationStatus;
+  mode: IntegrationMode;
+  accountRef: string;
+  hasCredentials: boolean;
+  lastSyncAt: string | null;
+  lastError: string;
+  events: IntegrationEvent[];
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Place = {
   id: string;
   name: string;

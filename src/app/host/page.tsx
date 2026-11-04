@@ -20,6 +20,7 @@ import {
   propertyName,
 } from "@/lib/host-context";
 import {
+  formatDate,
   formatDateTime,
   priorityLabels,
   priorityStyles,
@@ -27,7 +28,8 @@ import {
   statusStyles,
   todayISO,
 } from "@/lib/utils";
-import type { Priority } from "@/lib/types";
+import { MigrationRequiredError } from "@/lib/data/repo";
+import type { Priority, Reservation } from "@/lib/types";
 
 export const metadata = { title: "Host overview" };
 export const dynamic = "force-dynamic";
@@ -53,6 +55,27 @@ export default async function HostOverviewPage() {
 
   const guestNames = new Map(guests.map((guest) => [guest.id, guest.guestName]));
   const propertyNames = new Map(properties.map((property) => [property.id, property.name]));
+
+  // Reservations arrive with the additive migration; until it is applied the
+  // overview simply omits the block instead of failing.
+  let nextArrivals: { reservation: Reservation; propertyName: string }[] = [];
+  try {
+    const reservations = await workspace.repo.listReservations(
+      properties.map((property) => property.id),
+    );
+    nextArrivals = reservations
+      .filter((reservation) => reservation.status === "upcoming")
+      .sort((a, b) => a.checkInDate.localeCompare(b.checkInDate))
+      .slice(0, 3)
+      .map((reservation) => ({
+        reservation,
+        propertyName: propertyNames.get(reservation.propertyId) ?? "Property",
+      }));
+  } catch (error) {
+    if (!(error instanceof MigrationRequiredError)) {
+      console.error("[host] reservations unavailable", error);
+    }
+  }
 
   const messagesByConversation = await Promise.all(
     recentConversations.map(async (conversation) => ({
@@ -112,6 +135,39 @@ export default async function HostOverviewPage() {
             icon={<BellRing className="size-3.5" />}
           />
         </div>
+
+        {nextArrivals.length > 0 ? (
+          <Card className="p-5 sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="size-4 text-ink-soft" />
+                <h2 className="text-[15px] font-semibold">Next arrivals</h2>
+              </div>
+              <Link
+                href="/host/reservations"
+                className="inline-flex items-center gap-1 text-[11.5px] text-muted transition hover:text-ink"
+              >
+                All reservations <ChevronRight className="size-3.5" />
+              </Link>
+            </div>
+            <ul className="mt-4 grid gap-2 sm:grid-cols-3">
+              {nextArrivals.map(({ reservation, propertyName: name }) => (
+                <li
+                  key={reservation.id}
+                  className="rounded-xl border border-line bg-cream/50 p-3.5"
+                >
+                  <p className="font-mono text-[10.5px] text-muted">{reservation.code}</p>
+                  <p className="mt-1 text-[13px] font-medium">{reservation.guestName}</p>
+                  <p className="mt-1 text-[11px] text-muted">
+                    {formatDate(reservation.checkInDate)} · {reservation.guests} guest
+                    {reservation.guests === 1 ? "" : "s"}
+                  </p>
+                  <p className="mt-0.5 text-[10.5px] text-muted">{name}</p>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ) : null}
 
         <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
           {/* Needs attention */}

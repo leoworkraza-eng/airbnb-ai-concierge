@@ -31,4 +31,11 @@ export async function getHostRepo(): Promise<Repository> {
   return localRepository;
 }
 
+/**
+ * Service-role repository for server-only records — integration credentials,
+ * and the guest-side writes the unauthenticated flows perform. Never hand this
+ * to a client component.
+ */
+export const getServiceRepo = getGuestRepo;
+
 export type { Repository } from "./repo";

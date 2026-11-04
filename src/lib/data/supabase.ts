@@ -5,6 +5,8 @@ import type {
   Conversation,
   GuestPreferences,
   GuestSession,
+  HostIntegration,
+  IntegrationEvent,
   MaintenanceRequest,
   MaintenanceStatus,
   Message,
@@ -12,12 +14,18 @@ import type {
   Profile,
   Property,
   PropertyInput,
+  Reservation,
   ToolEvent,
 } from "../types";
+import { newReservationCode, statusForDates } from "../reservations";
+import { todayISO } from "../utils";
 import {
+  MigrationRequiredError,
   newTicketCode,
   type CreateGuestSessionInput,
   type CreateRequestInput,
+  type CreateReservationInput,
+  type IntegrationPatch,
   type Repository,
 } from "./repo";
 
@@ -180,6 +188,58 @@ function mapProfile(row: Row): Profile {
     role: str(row.role) === "admin" ? "admin" : "host",
     createdAt: str(row.created_at),
   };
+}
+
+function mapReservation(row: Row): Reservation {
+  return {
+    id: str(row.id),
+    code: str(row.code),
+    propertyId: str(row.property_id),
+    guestSessionId: nullableStr(row.guest_session_id),
+    guestName: str(row.guest_name),
+    guestEmail: str(row.guest_email),
+    checkInDate: str(row.check_in_date),
+    checkOutDate: str(row.check_out_date),
+    guests: Number(row.guests ?? 2),
+    status: (str(row.status) || "upcoming") as Reservation["status"],
+    source: (str(row.source) || "manual") as Reservation["source"],
+    externalId: nullableStr(row.external_id),
+    notes: str(row.notes),
+    createdAt: str(row.created_at),
+    updatedAt: str(row.updated_at),
+  };
+}
+
+function mapIntegration(row: Row): HostIntegration {
+  const credentials = (row.credentials ?? {}) as Row;
+  return {
+    id: str(row.id),
+    hostId: str(row.host_id),
+    provider: "airbnb",
+    status: (str(row.status) || "not_connected") as HostIntegration["status"],
+    mode: (str(row.mode) || "oauth") as HostIntegration["mode"],
+    accountRef: str(row.account_ref),
+    hasCredentials: Boolean(credentials.clientSecret),
+    lastSyncAt: nullableStr(row.last_sync_at),
+    lastError: str(row.last_error),
+    events: arr<IntegrationEvent>(row.events),
+    createdAt: str(row.created_at),
+    updatedAt: str(row.updated_at),
+  };
+}
+
+/** Turns PostgREST's "no such table" answers into one actionable error. */
+function assertTable(error: { message?: string; code?: string } | null, table: string) {
+  if (!error) return;
+  const message = error.message ?? "";
+  if (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    /does not exist|schema cache|Could not find the table/i.test(message)
+  ) {
+    throw new MigrationRequiredError(table);
+  }
+  throw new Error(message || `The ${table} query failed.`);
 }
 
 export class SupabaseRepository implements Repository {
@@ -527,6 +587,175 @@ export class SupabaseRepository implements Repository {
       .update({ read: true })
       .eq("host_id", hostId);
     if (error) throw new Error(error.message);
+  }
+
+  async listReservations(propertyIds: string[]) {
+    if (!propertyIds.length) return [];
+    const { data, error } = await this.client
+      .from("reservations")
+      .select("*")
+      .in("property_id", propertyIds)
+      .order("check_in_date", { ascending: true });
+    assertTable(error, "reservations");
+    return ((data ?? []) as Row[]).map(mapReservation);
+  }
+
+  async getReservation(id: string) {
+    const { data, error } = await this.client
+      .from("reservations")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    assertTable(error, "reservations");
+    return data ? mapReservation(data as Row) : null;
+  }
+
+  async getReservationForGuest(guestSessionId: string) {
+    const { data, error } = await this.client
+      .from("reservations")
+      .select("*")
+      .eq("guest_session_id", guestSessionId)
+      .maybeSingle();
+    assertTable(error, "reservations");
+    return data ? mapReservation(data as Row) : null;
+  }
+
+  async createReservation(hostId: string, input: CreateReservationInput) {
+    const { data: property, error: propertyError } = await this.client
+      .from("properties")
+      .select("id")
+      .eq("id", input.propertyId)
+      .eq("host_id", hostId)
+      .maybeSingle();
+    if (propertyError) assertTable(propertyError, "properties");
+    if (!property) throw new Error("That property isn't on this account.");
+
+    const { data, error } = await this.client
+      .from("reservations")
+      .insert({
+        code: input.code ?? newReservationCode(input.source ?? "manual"),
+        property_id: input.propertyId,
+        guest_session_id: input.guestSessionId ?? null,
+        guest_name: input.guestName,
+        guest_email: input.guestEmail ?? "",
+        check_in_date: input.checkInDate,
+        check_out_date: input.checkOutDate,
+        guests: input.guests,
+        status: input.status ?? "upcoming",
+        source: input.source ?? "manual",
+        external_id: input.externalId ?? null,
+        notes: input.notes ?? "",
+      })
+      .select("*")
+      .single();
+    assertTable(error, "reservations");
+    if (!data) throw new Error("The reservation could not be saved.");
+    return mapReservation(data as Row);
+  }
+
+  async updateReservationStatus(
+    id: string,
+    status: Reservation["status"],
+    propertyIds: string[],
+  ) {
+    if (!propertyIds.length) return null;
+    const { data, error } = await this.client
+      .from("reservations")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .in("property_id", propertyIds)
+      .select("*")
+      .maybeSingle();
+    assertTable(error, "reservations");
+    return data ? mapReservation(data as Row) : null;
+  }
+
+  async linkReservationToGuest(propertyId: string, guest: GuestSession) {
+    const existing = await this.getReservationForGuest(guest.id);
+    if (existing) return existing;
+
+    const { data: open, error } = await this.client
+      .from("reservations")
+      .select("*")
+      .eq("property_id", propertyId)
+      .is("guest_session_id", null)
+      .in("status", ["upcoming", "in_house"])
+      .order("check_in_date", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    assertTable(error, "reservations");
+
+    if (open) {
+      const { data: updated, error: updateError } = await this.client
+        .from("reservations")
+        .update({
+          guest_session_id: guest.id,
+          guest_name: guest.guestName,
+          check_in_date: guest.checkInDate,
+          check_out_date: guest.checkOutDate,
+          status: statusForDates(guest.checkInDate, guest.checkOutDate, todayISO(0)),
+        })
+        .eq("id", (open as Row).id as string)
+        .select("*")
+        .maybeSingle();
+      assertTable(updateError, "reservations");
+      if (updated) return mapReservation(updated as Row);
+    }
+
+    const { data: created, error: createError } = await this.client
+      .from("reservations")
+      .insert({
+        code: newReservationCode("demo"),
+        property_id: propertyId,
+        guest_session_id: guest.id,
+        guest_name: guest.guestName,
+        guest_email: "",
+        check_in_date: guest.checkInDate,
+        check_out_date: guest.checkOutDate,
+        guests: 2,
+        status: statusForDates(guest.checkInDate, guest.checkOutDate, todayISO(0)),
+        source: "demo",
+        notes: "Created for the demo guest session.",
+      })
+      .select("*")
+      .single();
+    assertTable(createError, "reservations");
+    return created ? mapReservation(created as Row) : null;
+  }
+
+  async getIntegration(hostId: string) {
+    const { data, error } = await this.client
+      .from("integrations")
+      .select("*")
+      .eq("host_id", hostId)
+      .eq("provider", "airbnb")
+      .maybeSingle();
+    assertTable(error, "integrations");
+    return data ? mapIntegration(data as Row) : null;
+  }
+
+  async saveIntegration(hostId: string, patch: IntegrationPatch) {
+    const payload: Row = {
+      host_id: hostId,
+      provider: "airbnb",
+      updated_at: new Date().toISOString(),
+    };
+    if (patch.status !== undefined) payload.status = patch.status;
+    if (patch.mode !== undefined) payload.mode = patch.mode;
+    if (patch.accountRef !== undefined) payload.account_ref = patch.accountRef;
+    if (patch.lastSyncAt !== undefined) payload.last_sync_at = patch.lastSyncAt;
+    if (patch.lastError !== undefined) payload.last_error = patch.lastError;
+    if (patch.events !== undefined) payload.events = patch.events.slice(0, 20);
+    if (patch.credentials !== undefined) payload.credentials = patch.credentials ?? {};
+
+    const { data, error } = await this.client
+      .from("integrations")
+      .upsert(payload, { onConflict: "host_id,provider" })
+      .select("*")
+      .single();
+    assertTable(error, "integrations");
+    if (!data) throw new Error("The connection record could not be saved.");
+    return mapIntegration(data as Row);
   }
 
   async getProfile(id: string) {

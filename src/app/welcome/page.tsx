@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Phone,
   Sparkles,
+  Users,
   Wifi,
   Wrench,
 } from "lucide-react";
@@ -24,6 +25,7 @@ import { getGuestContext, greeting } from "@/lib/guest-context";
 import { getGuestRepo } from "@/lib/data";
 import { media } from "@/lib/media";
 import { formatDate, nightsBetween, statusLabels } from "@/lib/utils";
+import { reservationSourceLabels, reservationSourceNotes } from "@/lib/reservations";
 
 export const metadata = { title: "Welcome" };
 export const dynamic = "force-dynamic";
@@ -36,6 +38,8 @@ export default async function WelcomePage() {
   const nights = nightsBetween(guest.checkInDate, guest.checkOutDate);
   const repo = await getGuestRepo();
   const requests = await repo.listMaintenanceForGuest(guest.id);
+  // Best effort: the page still works before the reservation migration runs.
+  const reservation = await repo.getReservationForGuest(guest.id).catch(() => null);
 
   const interests = guest.preferences.interests;
   const firstName = guest.guestName;
@@ -355,6 +359,38 @@ export default async function WelcomePage() {
                 </div>
               </section>
             </Reveal>
+
+            {reservation ? (
+              <Reveal y={20} blur={false} delay={60}>
+                <section className="surface surface-shadow p-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10.5px] font-semibold tracking-[0.14em] text-muted uppercase">
+                      Your reservation
+                    </p>
+                    <Pill tone="neutral">
+                      {reservationSourceLabels[reservation.source]}
+                    </Pill>
+                  </div>
+                  <p className="mt-2 font-mono text-[12px] text-ink-soft">
+                    {reservation.code}
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11.5px] text-muted">
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarDays className="size-3" />
+                      {formatDate(reservation.checkInDate)} →{" "}
+                      {formatDate(reservation.checkOutDate)}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Users className="size-3" /> {reservation.guests} guest
+                      {reservation.guests === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted">
+                    {reservationSourceNotes[reservation.source]}
+                  </p>
+                </section>
+              </Reveal>
+            ) : null}
 
             <Reveal y={20} blur={false} delay={80}>
               <section className="surface surface-shadow p-5">

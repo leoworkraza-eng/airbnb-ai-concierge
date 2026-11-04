@@ -3,6 +3,9 @@ import type {
   Conversation,
   GuestPreferences,
   GuestSession,
+  HostIntegration,
+  IntegrationEvent,
+  IntegrationMode,
   MaintenanceRequest,
   MaintenanceStatus,
   Message,
@@ -12,10 +15,27 @@ import type {
   Property,
   PropertyInput,
   RequestCategory,
+  Reservation,
+  ReservationSource,
+  ReservationStatus,
   ToolEvent,
 } from "../types";
 
 export type RepoMode = "supabase" | "local";
+
+/**
+ * Thrown when the database is reachable but the reservation/integration tables
+ * have not been created yet. The UI turns this into an actionable notice
+ * instead of a stack trace.
+ */
+export class MigrationRequiredError extends Error {
+  constructor(readonly table: string) {
+    super(
+      `The "${table}" table is missing. Run supabase/migrations/2026-11-reservations-and-integrations.sql in the Supabase SQL editor, then reload this page.`,
+    );
+    this.name = "MigrationRequiredError";
+  }
+}
 
 export type CreateRequestInput = {
   propertyId: string;
@@ -33,6 +53,31 @@ export type CreateGuestSessionInput = {
   checkInDate: string;
   checkOutDate: string;
   preferences?: GuestPreferences;
+};
+
+export type CreateReservationInput = {
+  propertyId: string;
+  guestName: string;
+  guestEmail?: string;
+  checkInDate: string;
+  checkOutDate: string;
+  guests: number;
+  status?: ReservationStatus;
+  source?: ReservationSource;
+  notes?: string;
+  externalId?: string | null;
+  code?: string;
+  guestSessionId?: string | null;
+};
+
+export type IntegrationPatch = {
+  status?: HostIntegration["status"];
+  mode?: IntegrationMode;
+  accountRef?: string;
+  lastSyncAt?: string | null;
+  lastError?: string;
+  events?: IntegrationEvent[];
+  credentials?: { clientId: string; clientSecret: string } | null;
 };
 
 /**
@@ -98,6 +143,32 @@ export interface Repository {
   }): Promise<Notification>;
   listNotifications(hostId: string): Promise<Notification[]>;
   markNotificationsRead(hostId: string): Promise<void>;
+
+  /* Reservations ----------------------------------------------------------- */
+  listReservations(propertyIds: string[]): Promise<Reservation[]>;
+  getReservation(id: string): Promise<Reservation | null>;
+  getReservationForGuest(guestSessionId: string): Promise<Reservation | null>;
+  createReservation(
+    hostId: string,
+    input: CreateReservationInput,
+  ): Promise<Reservation>;
+  updateReservationStatus(
+    id: string,
+    status: ReservationStatus,
+    propertyIds: string[],
+  ): Promise<Reservation | null>;
+  /** Attach the next open reservation to a new guest session, or create a demo one. */
+  linkReservationToGuest(
+    propertyId: string,
+    guest: GuestSession,
+  ): Promise<Reservation | null>;
+
+  /* External integrations --------------------------------------------------- */
+  getIntegration(hostId: string): Promise<HostIntegration | null>;
+  saveIntegration(
+    hostId: string,
+    patch: IntegrationPatch,
+  ): Promise<HostIntegration>;
 
   getProfile(id: string): Promise<Profile | null>;
   getProfileByEmail(email: string): Promise<Profile | null>;
