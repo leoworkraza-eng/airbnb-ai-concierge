@@ -457,6 +457,79 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ------------------------------------------------------------ ECOSYSTEM */}
+      <section className="border-t border-line bg-cream py-16 lg:py-20">
+        <div className="container-page">
+          <SectionHeading
+            eyebrow="The wider project"
+            title="One product inside a four-tool AI ecosystem."
+            description="This application is the customer-facing half. The other three tools in the project are separate deliverables, shown alongside it rather than wired into it."
+            align="center"
+          />
+
+          <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                icon: MessageSquare,
+                name: "Airbnb AI Concierge",
+                role: "Customer-facing concierge for guests and hosts",
+                state: "Running here",
+                live: true,
+              },
+              {
+                icon: Compass,
+                name: "Napkin AI",
+                role: "Visual business model and customer journey",
+                state: "Separate tool",
+                live: false,
+              },
+              {
+                icon: Sun,
+                name: "Suno",
+                role: "Original sonic branding for the concept",
+                state: "Separate tool",
+                live: false,
+              },
+              {
+                icon: Sparkles,
+                name: "Claude business agent",
+                role: "Semi-autonomous agent with its own system prompt",
+                state: "Separate tool",
+                live: false,
+              },
+            ].map((item) => (
+              <div
+                key={item.name}
+                className="rounded-[20px] border border-line bg-white p-5"
+              >
+                <span
+                  className={
+                    item.live
+                      ? "grid size-9 place-items-center rounded-xl bg-brand-soft text-brand"
+                      : "grid size-9 place-items-center rounded-xl bg-sand text-ink-soft"
+                  }
+                >
+                  <item.icon className="size-4" strokeWidth={1.7} />
+                </span>
+                <p className="mt-4 text-[13.5px] font-semibold">{item.name}</p>
+                <p className="mt-1 text-[12px] leading-relaxed text-muted">{item.role}</p>
+                <div className="mt-3">
+                  <Pill tone={item.live ? "success" : "neutral"}>{item.state}</Pill>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="mx-auto mt-6 max-w-2xl text-center text-[11.5px] leading-relaxed text-muted">
+            These four are independent deliverables: no data is exchanged between
+            them, and only this application is a running product. Anything the
+            others would contribute — a business agent reading aggregate stay
+            performance, for example — is a design proposal for now, not a
+            connection that exists.
+          </p>
+        </div>
+      </section>
+
       {/* ----------------------------------------------------------------- CTA */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
