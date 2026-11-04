@@ -1,5 +1,6 @@
 import type { Repository } from "../data/repo";
 import { searchPlaces } from "../places";
+import { formatItinerary, isItinerarySlot } from "../itinerary";
 import type {
   GuestSession,
   MaintenanceRequest,
@@ -173,6 +174,48 @@ export const toolDefinitions = [
       required: [],
     },
   },
+  {
+    name: "get_itinerary",
+    description:
+      "Read the guest's saved day-by-day plan for this stay. Use it before answering questions about the plan, and before editing it, so you never invent a stop.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "add_itinerary_item",
+    description:
+      "Add one stop to the guest's saved plan. Prefer a title that matches an entry from search_local_recommendations, and pass its place_id. The guest sees the stop immediately on the Plan page.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        day: {
+          type: "number",
+          description: "Day of the stay, 1 = check-in day.",
+        },
+        slot: {
+          type: "string",
+          enum: ["morning", "afternoon", "evening"],
+        },
+        title: {
+          type: "string",
+          description: "Short name of the stop, e.g. 'Fundació Joan Miró'.",
+        },
+        place_id: {
+          type: "string",
+          description:
+            "The id returned by search_local_recommendations when the stop comes from the guide.",
+        },
+        notes: {
+          type: "string",
+          description: "One short line of practical context, e.g. '15 min walk · book ahead'.",
+        },
+      },
+      required: ["day", "slot", "title"],
+    },
+  },
 ] as const;
 
 export const toolLabels: Record<string, string> = {
@@ -181,6 +224,8 @@ export const toolLabels: Record<string, string> = {
   save_guest_preferences: "Saved guest preferences",
   notify_host: "Notified the host",
   search_local_recommendations: "Searched the Barcelona guide",
+  get_itinerary: "Read the guest's plan",
+  add_itinerary_item: "Added a stop to the plan",
 };
 
 type ToolResult = { result: Record<string, unknown>; event: ToolEvent; ticket?: MaintenanceRequest };
@@ -439,6 +484,86 @@ export async function executeTool(
             detail: `${items.length} result${items.length === 1 ? "" : "s"} · ${
               source === "google_places" ? "live Google Places" : "curated demo dataset"
             }`,
+          },
+        };
+      }
+
+      case "get_itinerary": {
+        const items = await repo.listItinerary(guest.id);
+
+        if (!items.length) {
+          return {
+            result: {
+              ok: true,
+              items: [],
+              note: "The guest has no saved plan yet. Offer to build one with add_itinerary_item, one stop per slot.",
+            },
+            event: {
+              name,
+              label: "Read the guest's plan",
+              status: "ok",
+              detail: "empty",
+            },
+          };
+        }
+
+        return {
+          result: {
+            ok: true,
+            items: items.map((item) => ({
+              id: item.id,
+              day: item.day,
+              slot: item.slot,
+              title: item.title,
+              notes: item.notes,
+              done: item.done,
+            })),
+            text: formatItinerary(items),
+            note: "Only describe stops that appear here. Never invent a booking, a time slot or a reservation.",
+          },
+          event: {
+            name,
+            label: "Read the guest's plan",
+            status: "ok",
+            detail: `${items.length} stop${items.length === 1 ? "" : "s"}`,
+          },
+        };
+      }
+
+      case "add_itinerary_item": {
+        const day = Math.min(Math.max(Math.round(Number(input.day ?? 1)) || 1, 1), 14);
+        const slot = isItinerarySlot(input.slot) ? input.slot : "afternoon";
+        const title = String(input.title ?? "").trim().slice(0, 120);
+        if (title.length < 2) {
+          return fail(name, "A short title for the stop is required.");
+        }
+
+        const item = await repo.addItineraryItem({
+          guestSessionId: guest.id,
+          propertyId: property.id,
+          day,
+          slot,
+          title,
+          placeId: typeof input.place_id === "string" ? input.place_id : null,
+          notes: String(input.notes ?? "").slice(0, 240),
+        });
+
+        return {
+          result: {
+            ok: true,
+            item: {
+              id: item.id,
+              day: item.day,
+              slot: item.slot,
+              title: item.title,
+            },
+            note: "Saved to the guest's plan. The guest sees it under Plan and can tick it off or remove it.",
+          },
+          event: {
+            name,
+            label: `Added "${title}" to day ${day}`,
+            status: "ok",
+            detail: slot,
           },
         };
       }

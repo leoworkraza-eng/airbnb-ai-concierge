@@ -180,11 +180,6 @@ export default async function ExplorePage({
                       {place.distanceKm} km
                     </p>
                   </div>
-                  {matches ? (
-                    <span className="absolute top-3 left-3 hidden" aria-hidden="true">
-                      {meta.label}
-                    </span>
-                  ) : null}
                 </div>
 
                 <div className="flex flex-1 flex-col p-4">

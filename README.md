@@ -26,6 +26,7 @@ Built with **Next.js 16 (App Router) + TypeScript + Tailwind CSS 4**, **Claude**
 | Tool: `save_guest_preferences` | Stores interests/notes only after explicit guest consent. |
 | Tool: `notify_host` | Writes a host notification row. |
 | Tool: `search_local_recommendations` | Ranks the curated Barcelona dataset; optionally uses Google Places when a key is configured. |
+| Plan | A saved, editable day-by-day itinerary built from the curated guide: three stops a day, ordered by the guest's interests, with tick-off, custom stops and a rebuild. The concierge reads and edits the same plan through `get_itinerary` / `add_itinerary_item`, in both model and guided mode. |
 | Explore | Filterable Barcelona guide, clearly labelled as curated demonstration data. |
 | Support | Guest-facing request form, emergency escalation to 112, and a list of that guest's tickets. |
 | Host auth | Supabase email/password when configured, otherwise a documented demo host account. |
@@ -100,12 +101,14 @@ A matching `profiles` row is created automatically on first sign-in.
 1. Create a project at <https://supabase.com>.
 2. Open **SQL Editor** and run [`supabase/schema.sql`](supabase/schema.sql). This creates
    all seven tables, indexes, the `updated_at` triggers and Row Level Security policies.
-3. In the same SQL editor, run
-   [`supabase/migrations/2026-11-reservations-and-integrations.sql`](supabase/migrations/2026-11-reservations-and-integrations.sql).
-   It is additive: it creates the `reservations` and `integrations` tables with
-   host-scoped RLS and leaves existing data untouched. Until it is applied the app still
-   runs — reservation screens show a migration notice and the guest page omits the
-   reservation card.
+3. In the same SQL editor, run the two additive migrations:
+   [`supabase/migrations/2026-11-reservations-and-integrations.sql`](supabase/migrations/2026-11-reservations-and-integrations.sql)
+   (the `reservations` and `integrations` tables) and
+   [`supabase/migrations/2026-12-itinerary.sql`](supabase/migrations/2026-12-itinerary.sql)
+   (the `itinerary_items` table). Both are additive: no existing table, column or policy
+   is dropped. Until they are applied the app still runs — the reservation and plan
+   screens show a migration notice instead of failing, and the rest of the guest
+   experience is unaffected.
 4. Copy the project URL, anon key and service-role key into `.env.local`.
 5. Create a host user in **Authentication → Users** (or use the sign-up flow of your
    choice), then sign in at `/host/login`. The first sign-in creates the profile row, and
@@ -141,7 +144,7 @@ Every reservation row carries a source, shown in the host UI and on the guest pa
 `src/lib/claude/agent.ts` runs a bounded tool loop (max 6 iterations):
 
 1. Load the last 40 messages for the guest's conversation.
-2. Call `messages.create` with the concierge system prompt and five tool definitions.
+2. Call `messages.create` with the concierge system prompt and seven tool definitions.
 3. Execute every `tool_use` block against the real repository.
 4. Append the assistant turn and `tool_result` blocks, then repeat.
 5. Store only the guest-visible reply, with a compact tool trace for the UI.
@@ -184,6 +187,7 @@ src/
     auth.ts                      signed guest/host sessions
     supabase/server.ts           cookie-scoped Supabase client (RLS)
     places.ts                    curated dataset + optional Google Places
+    itinerary.ts                 plan vocabulary + deterministic plan builder
     validation.ts                zod schemas
 supabase/schema.sql              tables, indexes, triggers, RLS
 ```
@@ -229,7 +233,12 @@ End-to-end walkthrough (the eight demo scenes):
 8. Open **Guest interactions** → generate an AI summary of the conversation.
 9. Open **Reservations** → the demo stays are labelled *Demo data*; add one by hand and
    change its status. It appears on the guest welcome page once a guest session claims it.
-10. Open **Airbnb connection** → save dummy credentials (stored server-side), enable the
+10. Open **Plan** → **Build a plan**. Three stops a day appear, ordered by the guest's
+    interests. Tick one off, remove one, add a stop from the guide or type your own; the
+    list is replaced by whatever the database returned, so nothing is ever shown unsaved.
+    Then ask the concierge *“Can you modify my itinerary to include more outdoor
+    activities?”* — it rebuilds the same saved plan and the Plan page reflects it.
+11. Open **Airbnb connection** → save dummy credentials (stored server-side), enable the
     demo connection, and press **Attempt sync**. It fails with a written reason and the
     attempt is recorded in the sync log — nothing is imported.
 

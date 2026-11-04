@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   ArrowRight,
   CalendarDays,
+  CalendarRange,
   Check,
   ChevronRight,
   Clock,
@@ -57,6 +58,13 @@ export default async function WelcomePage() {
       icon: KeyRound,
       label: "Arrival",
       detail: `From ${property.checkIn} · lockbox`,
+      tone: "neutral",
+    },
+    {
+      href: "/itinerary",
+      icon: CalendarRange,
+      label: "Your plan",
+      detail: "Day by day",
       tone: "neutral",
     },
     {
@@ -149,7 +157,7 @@ export default async function WelcomePage() {
                 <ConciergeAvatar size="md" />
                 <div>
                   <p className="text-[12.5px] font-medium text-white">Concierge online</p>
-                  <p className="text-[10.5px] text-white/60">Answers in about 4 seconds</p>
+                  <p className="text-[10.5px] text-white/60">Reads your host&rsquo;s record</p>
                 </div>
               </div>
             </div>
@@ -162,7 +170,7 @@ export default async function WelcomePage() {
             <h2 className="text-[15px] font-semibold">Quick access</h2>
             <span className="text-[11px] text-muted">Everything essential, one tap away</span>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {quickLinks.map((item, index) => (
               <Reveal key={item.label} delay={index * 60} y={16} blur={false} className="h-full">
                 <Link

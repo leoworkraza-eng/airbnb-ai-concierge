@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import {
   AlertTriangle,
   ArrowRight,
+  CalendarRange,
   Heart,
   MessageSquare,
   ShieldCheck,
@@ -40,6 +41,8 @@ export default async function ConciergePage({
     repo.listMessages(conversation.id, 60),
     repo.listMaintenanceForGuest(guest.id),
   ]);
+  // Optional: the concierge still works before the itinerary migration runs.
+  const plan = await repo.listItinerary(guest.id).catch(() => []);
 
   return (
     <GuestShell propertyName={property.name} active="concierge" guestName={guest.guestName}>
@@ -63,7 +66,6 @@ export default async function ConciergePage({
             />
             {isConciergeConfigured ? "Concierge connected" : "Guided mode"}
           </Pill>
-          <Pill tone="neutral">Response time ~4s</Pill>
         </div>
       </div>
 
@@ -173,6 +175,17 @@ export default async function ConciergePage({
             <strong className="font-semibold">Emergencies:</strong> call 112. The
             concierge can notify {property.hostName}, but it cannot send help.
           </Note>
+
+          <Link
+            href="/itinerary"
+            className="flex items-center justify-between rounded-2xl border border-line bg-white px-4 py-3 text-[12.5px] font-medium transition hover:border-ink/20"
+          >
+            <span className="inline-flex items-center gap-2">
+              <CalendarRange className="size-3.5 text-muted" />
+              {plan.length ? `Your plan · ${plan.length} stops` : "Plan your days"}
+            </span>
+            <ArrowRight className="size-3.5" />
+          </Link>
 
           <Link
             href="/explore"

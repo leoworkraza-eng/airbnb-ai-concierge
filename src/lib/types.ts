@@ -211,3 +211,26 @@ export type Place = {
   distanceKm: number;
   bestTime: "morning" | "afternoon" | "evening" | "any";
 };
+
+/* ------------------------------------------------------------------ ITINERARY */
+
+export type ItinerarySlot = "morning" | "afternoon" | "evening";
+
+/**
+ * One planned stop on a guest's stay. `day` is 1-based from check-in, and the
+ * plan is scoped to a single guest session so one guest can never read or edit
+ * another's itinerary.
+ */
+export type ItineraryItem = {
+  id: string;
+  guestSessionId: string;
+  propertyId: string;
+  day: number;
+  slot: ItinerarySlot;
+  title: string;
+  placeId: string | null;
+  notes: string;
+  done: boolean;
+  createdAt: string;
+  updatedAt: string;
+};

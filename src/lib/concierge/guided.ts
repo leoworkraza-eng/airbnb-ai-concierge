@@ -1,7 +1,9 @@
 import type { TurnResult } from "../ai/shared";
 import type { Repository } from "../data/repo";
+import { MigrationRequiredError } from "../data/repo";
 import type {
   GuestSession,
+  ItineraryItem,
   MaintenanceRequest,
   Message,
   Priority,
@@ -10,6 +12,7 @@ import type {
   ToolEvent,
 } from "../types";
 import { executeTool } from "../claude/tools";
+import { formatItinerary, planStay, stayDayCount } from "../itinerary";
 
 /* ---------------------------------------------------------------------------
    Guided mode.
@@ -294,7 +297,10 @@ function interestsFrom(text: string) {
     /(?:i (?:really )?(?:like|love|enjoy|prefer)|i'?m (?:into|interested in)|we (?:like|love|enjoy)|interested in)\s+(.+)/i,
   );
   if (!match) return [];
-  return match[1]
+  // Stop at the end of the clause so "...and nightlife. Personalize my
+  // recommendations." does not become one over-long interest.
+  const body = match[1].split(/\.(\s|$)/)[0];
+  return body
     .replace(/\b(and|plus|also)\b/gi, ",")
     .split(/[,;]/)
     .map((piece) =>
@@ -351,9 +357,10 @@ function applianceFor(property: Property, text: string) {
 
   for (const entry of property.applianceInstructions) {
     const name = clean(entry.appliance);
-    if (text.includes(name)) return entry;
+    // Word boundaries, not substrings: "activities" must never match "AC".
+    if (contains(text, [name])) return entry;
     const extra = synonyms[name] ?? [];
-    if (extra.some((needle) => text.includes(needle))) return entry;
+    if (contains(text, extra)) return entry;
   }
   return null;
 }
@@ -536,6 +543,33 @@ async function respond(rawInput: string, history: Message[], ctx: Ctx): Promise<
       toolEvents: events,
       ticket: null,
     };
+  }
+
+  /* ------------------------------------------------------------ The plan */
+  // Checked before the topic matchers: "more outdoor activities" is about the
+  // plan, and must not be mistaken for an appliance question.
+  if (
+    contains(text, [
+      "itinerary",
+      "plan my stay",
+      "plan my trip",
+      "plan my days",
+      "plan my visit",
+      "day-by-day",
+      "day by day",
+      "schedule my",
+      "organise my",
+      "organize my",
+      "two-day",
+      "three-day",
+      "four-day",
+      "2-day",
+      "3-day",
+      "my plan",
+      "my itinerary",
+    ])
+  ) {
+    return planReply(rawInput, text, ctx, events);
   }
 
   /* -------------------------------------------------- 3. Wi-Fi and network */
@@ -722,10 +756,26 @@ async function respond(rawInput: string, history: Message[], ctx: Ctx): Promise<
     "around here",
     "things to do",
     "what to do",
+    "what should i do",
+    "what can i do",
+    "what should i see",
+    "worth doing",
+    "worth seeing",
+    "sights",
     "tonight",
     "visit",
     "see",
     "activity",
+    "cheaper",
+    "budget",
+    "closer",
+    "nearer",
+    "quieter",
+    "vegetarian",
+    "vegan",
+    "somewhere else",
+    "something else",
+    "other options",
   ]);
 
   const wantsTransport = contains(text, [
@@ -759,6 +809,11 @@ async function respond(rawInput: string, history: Message[], ctx: Ctx): Promise<
   }
 
   if (wantsGuide) {
+    // Context: a short follow-up after a recommendation list is a refinement of
+    // it, not a brand-new question.
+    const refining = /km away|curated Barcelona guide|Google Places/i.test(
+      previousAssistant?.content ?? "",
+    );
     const interests = [
       ...guest.preferences.interests,
       ...interestsFrom(rawInput),
@@ -799,6 +854,7 @@ async function respond(rawInput: string, history: Message[], ctx: Ctx): Promise<
 
     return {
       reply: [
+        ...(refining ? ["Narrowing that down from what I suggested before.", ""] : []),
         formatRecommendations(items, String(outcome.result.source ?? "")),
         ``,
         `Tell me your budget or how far you'll walk and I'll narrow it down. If you want, I can remember the kind of places you like for next time.`,
@@ -896,6 +952,192 @@ async function respond(rawInput: string, history: Message[], ctx: Ctx): Promise<
       `For anything else, ${property.hostName} is on ${property.hostPhone}.`,
     ].join("\n"),
     toolEvents: [],
+    ticket: null,
+  };
+}
+
+/* ---------------------------------------------------------------------------
+   The plan, without a model.
+
+   Builds and rebuilds a real saved itinerary from the same curated guide, and
+   reads it back. Everything it claims is a row that exists in the database, and
+   a missing table is reported as a missing table.
+   --------------------------------------------------------------------------- */
+
+const migrationReply = (): TurnResult => ({
+  reply: [
+    `The plan needs a database table that hasn't been created yet, so nothing was saved.`,
+    ``,
+    `Run supabase/migrations/2026-12-itinerary.sql in the Supabase SQL editor and reload. Everything else in the app keeps working meanwhile — I can still answer about the apartment and file tickets.`,
+  ].join("\n"),
+  toolEvents: [],
+  ticket: null,
+});
+
+async function planReply(
+  rawInput: string,
+  text: string,
+  ctx: Ctx,
+  events: ToolEvent[],
+): Promise<TurnResult> {
+  const { guest, property } = ctx;
+  const stayDays = stayDayCount(guest.checkInDate, guest.checkOutDate);
+
+  // "two-day", "3 days", "four-day plan" — never more than the stay itself.
+  const dayWords: Record<string, number> = {
+    one: 1,
+    two: 2,
+    three: 3,
+    four: 4,
+    five: 5,
+    six: 6,
+    seven: 7,
+  };
+  const requested = text.match(
+    /\b(?:(\d+)|(two|three|four|five|six|seven|one))[\s-]?days?\b/,
+  );
+  const requestedDays = requested ? Number(requested[1] ?? dayWords[requested[2]]) : null;
+  let days = requestedDays ? Math.min(requestedDays, stayDays) : stayDays;
+
+  let existing: ItineraryItem[] = [];
+  try {
+    existing = await ctx.repo.listItinerary(guest.id);
+  } catch (error) {
+    if (error instanceof MigrationRequiredError) return migrationReply();
+    throw error;
+  }
+
+  // A modification keeps the plan's own length unless a new span was asked for,
+  // so "make it more outdoor" does not silently stretch a two-day plan to four.
+  if (!requestedDays && existing.length) {
+    days = Math.min(Math.max(...existing.map((item) => item.day)), stayDays);
+  }
+
+  const adjust = contains(text, [
+    "modify",
+    "change",
+    "rebuild",
+    "redo",
+    "create",
+    "build",
+    "make me",
+    "new plan",
+    "plan it",
+    "start over",
+    "different",
+    "more outdoor",
+    "more indoor",
+    "more outside",
+    "more art",
+    "more food",
+    "less walking",
+    "swap",
+    "two-day",
+    "three-day",
+    "four-day",
+  ]);
+  const showOnly =
+    contains(text, [
+      "show me my plan",
+      "show my plan",
+      "what's my plan",
+      "what is my plan",
+      "read my plan",
+      "my itinerary",
+    ]) && !adjust;
+
+  if (existing.length && showOnly) {
+    return {
+      reply: [
+        `Here's the plan saved for your stay:`,
+        ``,
+        formatItinerary(existing),
+        ``,
+        `Open Plan to tick stops off, remove one, or add your own.`,
+      ].join("\n"),
+      toolEvents: events,
+      ticket: null,
+    };
+  }
+
+  if (existing.length && !adjust) {
+    return {
+      reply: [
+        `You already have a ${days}-day plan saved (${existing.length} stops):`,
+        ``,
+        formatItinerary(existing),
+        ``,
+        `Say "rebuild it" and I'll replace it, or open Plan to edit a single stop.`,
+      ].join("\n"),
+      toolEvents: events,
+      ticket: null,
+    };
+  }
+
+  const emphasis: string[] = [];
+  if (contains(text, ["outdoor", "outside", "park", "walk", "beach", "fresh air"]))
+    emphasis.push("outdoors");
+  if (contains(text, ["indoor", "museum", "rain", "culture", "art"])) emphasis.push("culture");
+  if (contains(text, ["food", "dinner", "restaurant", "eat", "tapas"]))
+    emphasis.push("restaurant");
+  if (contains(text, ["nightlife", "bar", "drink", "music", "club"])) emphasis.push("nightlife");
+
+  const stops = planStay({
+    days,
+    interests: [
+      ...guest.preferences.interests,
+      ...interestsFrom(rawInput),
+      ...categoriesFor(text),
+      ...emphasis,
+    ],
+  });
+
+  if (!stops.length) {
+    return {
+      reply: `The guide came back empty, so I couldn't build a plan. Try asking for restaurants or culture and I'll suggest something instead.`,
+      toolEvents: events,
+      ticket: null,
+    };
+  }
+
+  let saved: ItineraryItem[] = [];
+  try {
+    await ctx.repo.clearItinerary(guest.id);
+    for (const stop of stops) {
+      await ctx.repo.addItineraryItem({
+        guestSessionId: guest.id,
+        propertyId: property.id,
+        day: stop.day,
+        slot: stop.slot,
+        title: stop.title,
+        placeId: stop.placeId,
+        notes: stop.notes,
+      });
+    }
+    saved = await ctx.repo.listItinerary(guest.id);
+  } catch (error) {
+    if (error instanceof MigrationRequiredError) return migrationReply();
+    throw error;
+  }
+
+  events.push({
+    name: "add_itinerary_item",
+    label: `Built a ${days}-day plan`,
+    status: "ok",
+    detail: `${saved.length} stops`,
+  });
+
+  return {
+    reply: [
+      `${existing.length ? "Rebuilt" : "Built"} a ${days}-day plan around ${property.neighbourhood}${
+        emphasis.length ? `, weighted towards ${emphasis.join(" and ")}` : ""
+      }:`,
+      ``,
+      formatItinerary(saved),
+      ``,
+      `Open Plan to tick things off or add your own stops, and tell me if you'd like a day changed. The guide is demonstration data, so confirm hours before you go.`,
+    ].join("\n"),
+    toolEvents: events,
     ticket: null,
   };
 }

@@ -6,6 +6,8 @@ import type {
   HostIntegration,
   IntegrationEvent,
   IntegrationMode,
+  ItineraryItem,
+  ItinerarySlot,
   MaintenanceRequest,
   MaintenanceStatus,
   Message,
@@ -29,9 +31,12 @@ export type RepoMode = "supabase" | "local";
  * instead of a stack trace.
  */
 export class MigrationRequiredError extends Error {
-  constructor(readonly table: string) {
+  constructor(
+    readonly table: string,
+    readonly file = "supabase/migrations/2026-11-reservations-and-integrations.sql",
+  ) {
     super(
-      `The "${table}" table is missing. Run supabase/migrations/2026-11-reservations-and-integrations.sql in the Supabase SQL editor, then reload this page.`,
+      `The "${table}" table is missing. Run ${file} in the Supabase SQL editor, then reload this page.`,
     );
     this.name = "MigrationRequiredError";
   }
@@ -68,6 +73,16 @@ export type CreateReservationInput = {
   externalId?: string | null;
   code?: string;
   guestSessionId?: string | null;
+};
+
+export type CreateItineraryItemInput = {
+  guestSessionId: string;
+  propertyId: string;
+  day: number;
+  slot: ItinerarySlot;
+  title: string;
+  placeId?: string | null;
+  notes?: string;
 };
 
 export type IntegrationPatch = {
@@ -162,6 +177,17 @@ export interface Repository {
     propertyId: string,
     guest: GuestSession,
   ): Promise<Reservation | null>;
+
+  /* Itinerary --------------------------------------------------------------- */
+  listItinerary(guestSessionId: string): Promise<ItineraryItem[]>;
+  addItineraryItem(input: CreateItineraryItemInput): Promise<ItineraryItem>;
+  updateItineraryItem(
+    id: string,
+    guestSessionId: string,
+    patch: { done?: boolean; title?: string; notes?: string },
+  ): Promise<ItineraryItem | null>;
+  removeItineraryItem(id: string, guestSessionId: string): Promise<boolean>;
+  clearItinerary(guestSessionId: string): Promise<void>;
 
   /* External integrations --------------------------------------------------- */
   getIntegration(hostId: string): Promise<HostIntegration | null>;

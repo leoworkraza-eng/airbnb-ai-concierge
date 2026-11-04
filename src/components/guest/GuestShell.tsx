@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
+  CalendarRange,
   Compass,
   ConciergeBell,
   House,
@@ -24,6 +25,7 @@ export function Disclaimer({ className }: { className?: string }) {
 const tabs = [
   { id: "welcome", label: "Welcome", href: "/welcome", icon: House },
   { id: "stay", label: "My stay", href: "/stay", icon: KeyRound },
+  { id: "itinerary", label: "Plan", href: "/itinerary", icon: CalendarRange },
   { id: "concierge", label: "Concierge", href: "/concierge", icon: ConciergeBell },
   { id: "explore", label: "Explore", href: "/explore", icon: Compass },
   { id: "support", label: "Support", href: "/support", icon: LifeBuoy },

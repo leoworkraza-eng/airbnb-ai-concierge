@@ -193,7 +193,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <Pill tone="neutral" className="text-[10px]">
-                    Live preview
+                    Sample conversation
                   </Pill>
                 </div>
 
@@ -296,20 +296,18 @@ export default function LandingPage() {
             <Card className="overflow-hidden p-0">
               <div className="flex items-center justify-between border-b border-line px-5 py-4">
                 <div>
-                  <p className="eyebrow">Today</p>
+                  <p className="eyebrow">Sample dashboard</p>
                   <p className="mt-1 text-[16px] font-semibold">Casa Barcelona</p>
                 </div>
-                <Pill tone="success">
-                  <span className="size-1.5 rounded-full bg-emerald-500" /> Live demo
-                </Pill>
+                <Pill tone="neutral">Illustration</Pill>
               </div>
 
               <div className="grid grid-cols-2 divide-x divide-y divide-line border-b border-line sm:grid-cols-4 sm:divide-y-0">
                 {[
-                  { label: "In residence", value: "2" },
+                  { label: "Guests", value: "2" },
                   { label: "Open tickets", value: "2" },
-                  { label: "Answered", value: "148" },
-                  { label: "Reply time", value: "4s" },
+                  { label: "Arriving", value: "1" },
+                  { label: "Unread notes", value: "2" },
                 ].map((stat) => (
                   <div key={stat.label} className="px-4 py-3.5">
                     <p className="text-[10.5px] text-muted">{stat.label}</p>
@@ -338,6 +336,10 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
+              <p className="border-t border-line px-5 py-3 text-[10.5px] leading-relaxed text-muted">
+                Illustrative layout, not live data. Sign in to the host dashboard to
+                see the real tickets, guests and notifications stored in the database.
+              </p>
             </Card>
           </Reveal>
         </div>

@@ -6,6 +6,7 @@ import type {
   GuestPreferences,
   GuestSession,
   HostIntegration,
+  ItineraryItem,
   MaintenanceRequest,
   MaintenanceStatus,
   Message,
@@ -17,6 +18,7 @@ import type {
   ToolEvent,
 } from "../types";
 import { newReservationCode, statusForDates } from "../reservations";
+import { slotRank } from "../itinerary";
 import {
   DEMO_HOST,
   DEMO_PROPERTY_ID,
@@ -26,6 +28,7 @@ import { todayISO } from "../utils";
 import {
   newTicketCode,
   type CreateGuestSessionInput,
+  type CreateItineraryItemInput,
   type CreateRequestInput,
   type CreateReservationInput,
   type IntegrationPatch,
@@ -56,6 +59,7 @@ type LocalDb = {
   maintenanceRequests: MaintenanceRequest[];
   notifications: Notification[];
   reservations: Reservation[];
+  itinerary: ItineraryItem[];
   integrations: LocalIntegration[];
 };
 
@@ -263,6 +267,7 @@ function seedDb(): LocalDb {
     maintenanceRequests,
     notifications,
     reservations,
+    itinerary: [],
     integrations: [],
   };
 }
@@ -282,6 +287,7 @@ async function load(): Promise<LocalDb> {
     const parsed = JSON.parse(raw) as LocalDb;
     // Stores written before reservations existed are upgraded in place.
     parsed.reservations ??= [];
+    parsed.itinerary ??= [];
     parsed.integrations ??= [];
     globalThis.__conciergeLocalDb = parsed;
     return parsed;
@@ -739,6 +745,77 @@ export class LocalRepository implements Repository {
 
       row.updatedAt = now;
       return safeIntegration(row);
+    });
+  }
+
+  async listItinerary(guestSessionId: string) {
+    const db = await load();
+    return (db.itinerary ?? [])
+      .filter((item) => item.guestSessionId === guestSessionId)
+      .sort(
+        (a, b) =>
+          a.day - b.day ||
+          slotRank(a.slot) - slotRank(b.slot) ||
+          a.createdAt.localeCompare(b.createdAt),
+      )
+      .map(clone);
+  }
+
+  async addItineraryItem(input: CreateItineraryItemInput) {
+    return mutate((db) => {
+      if (!db.itinerary) db.itinerary = [];
+      const now = new Date().toISOString();
+      const item: ItineraryItem = {
+        id: crypto.randomUUID(),
+        guestSessionId: input.guestSessionId,
+        propertyId: input.propertyId,
+        day: input.day,
+        slot: input.slot,
+        title: input.title,
+        placeId: input.placeId ?? null,
+        notes: input.notes ?? "",
+        done: false,
+        createdAt: now,
+        updatedAt: now,
+      };
+      db.itinerary.push(item);
+      return clone(item);
+    });
+  }
+
+  async updateItineraryItem(
+    id: string,
+    guestSessionId: string,
+    patch: { done?: boolean; title?: string; notes?: string },
+  ) {
+    return mutate((db) => {
+      const item = (db.itinerary ?? []).find(
+        (entry) => entry.id === id && entry.guestSessionId === guestSessionId,
+      );
+      if (!item) return null;
+      if (patch.done !== undefined) item.done = patch.done;
+      if (patch.title !== undefined) item.title = patch.title;
+      if (patch.notes !== undefined) item.notes = patch.notes;
+      item.updatedAt = new Date().toISOString();
+      return clone(item);
+    });
+  }
+
+  async removeItineraryItem(id: string, guestSessionId: string) {
+    return mutate((db) => {
+      const before = (db.itinerary ?? []).length;
+      db.itinerary = (db.itinerary ?? []).filter(
+        (entry) => !(entry.id === id && entry.guestSessionId === guestSessionId),
+      );
+      return db.itinerary.length < before;
+    });
+  }
+
+  async clearItinerary(guestSessionId: string) {
+    await mutate((db) => {
+      db.itinerary = (db.itinerary ?? []).filter(
+        (entry) => entry.guestSessionId !== guestSessionId,
+      );
     });
   }
 

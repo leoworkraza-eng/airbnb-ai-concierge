@@ -7,6 +7,8 @@ import type {
   GuestSession,
   HostIntegration,
   IntegrationEvent,
+  ItineraryItem,
+  ItinerarySlot,
   MaintenanceRequest,
   MaintenanceStatus,
   Message,
@@ -23,6 +25,7 @@ import {
   MigrationRequiredError,
   newTicketCode,
   type CreateGuestSessionInput,
+  type CreateItineraryItemInput,
   type CreateRequestInput,
   type CreateReservationInput,
   type IntegrationPatch,
@@ -229,7 +232,32 @@ function mapIntegration(row: Row): HostIntegration {
 }
 
 /** Turns PostgREST's "no such table" answers into one actionable error. */
-function assertTable(error: { message?: string; code?: string } | null, table: string) {
+function mapItineraryItem(row: Row): ItineraryItem {
+  const slot = str(row.slot, "morning");
+  return {
+    id: str(row.id),
+    guestSessionId: str(row.guest_session_id),
+    propertyId: str(row.property_id),
+    day: Number(row.day ?? 1),
+    slot: (["morning", "afternoon", "evening"] as const).includes(slot as ItinerarySlot)
+      ? (slot as ItinerarySlot)
+      : "morning",
+    title: str(row.title),
+    placeId: nullableStr(row.place_id),
+    notes: str(row.notes),
+    done: row.done === true,
+    createdAt: str(row.created_at),
+    updatedAt: str(row.updated_at),
+  };
+}
+
+const ITINERARY_MIGRATION = "supabase/migrations/2026-12-itinerary.sql";
+
+function assertTable(
+  error: { message?: string; code?: string } | null,
+  table: string,
+  migration = "supabase/migrations/2026-11-reservations-and-integrations.sql",
+) {
   if (!error) return;
   const message = error.message ?? "";
   if (
@@ -237,7 +265,7 @@ function assertTable(error: { message?: string; code?: string } | null, table: s
     error.code === "PGRST205" ||
     /does not exist|schema cache|Could not find the table/i.test(message)
   ) {
-    throw new MigrationRequiredError(table);
+    throw new MigrationRequiredError(table, migration);
   }
   throw new Error(message || `The ${table} query failed.`);
 }
@@ -756,6 +784,77 @@ export class SupabaseRepository implements Repository {
     assertTable(error, "integrations");
     if (!data) throw new Error("The connection record could not be saved.");
     return mapIntegration(data as Row);
+  }
+
+  async listItinerary(guestSessionId: string) {
+    const { data, error } = await this.client
+      .from("itinerary_items")
+      .select("*")
+      .eq("guest_session_id", guestSessionId)
+      .order("day", { ascending: true })
+      .order("created_at", { ascending: true });
+    assertTable(error, "itinerary_items", ITINERARY_MIGRATION);
+    return ((data ?? []) as Row[]).map(mapItineraryItem);
+  }
+
+  async addItineraryItem(input: CreateItineraryItemInput) {
+    const { data, error } = await this.client
+      .from("itinerary_items")
+      .insert({
+        guest_session_id: input.guestSessionId,
+        property_id: input.propertyId,
+        day: input.day,
+        slot: input.slot,
+        title: input.title,
+        place_id: input.placeId ?? null,
+        notes: input.notes ?? "",
+      })
+      .select("*")
+      .single();
+    assertTable(error, "itinerary_items", ITINERARY_MIGRATION);
+    if (!data) throw new Error("The stop could not be saved.");
+    return mapItineraryItem(data as Row);
+  }
+
+  async updateItineraryItem(
+    id: string,
+    guestSessionId: string,
+    patch: { done?: boolean; title?: string; notes?: string },
+  ) {
+    const payload: Row = { updated_at: new Date().toISOString() };
+    if (patch.done !== undefined) payload.done = patch.done;
+    if (patch.title !== undefined) payload.title = patch.title;
+    if (patch.notes !== undefined) payload.notes = patch.notes;
+
+    const { data, error } = await this.client
+      .from("itinerary_items")
+      .update(payload)
+      .eq("id", id)
+      .eq("guest_session_id", guestSessionId)
+      .select("*")
+      .maybeSingle();
+    assertTable(error, "itinerary_items", ITINERARY_MIGRATION);
+    return data ? mapItineraryItem(data as Row) : null;
+  }
+
+  async removeItineraryItem(id: string, guestSessionId: string) {
+    const { data, error } = await this.client
+      .from("itinerary_items")
+      .delete()
+      .eq("id", id)
+      .eq("guest_session_id", guestSessionId)
+      .select("id")
+      .maybeSingle();
+    assertTable(error, "itinerary_items", ITINERARY_MIGRATION);
+    return Boolean(data);
+  }
+
+  async clearItinerary(guestSessionId: string) {
+    const { error } = await this.client
+      .from("itinerary_items")
+      .delete()
+      .eq("guest_session_id", guestSessionId);
+    assertTable(error, "itinerary_items", ITINERARY_MIGRATION);
   }
 
   async getProfile(id: string) {
