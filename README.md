@@ -119,6 +119,21 @@ A matching `profiles` row is created automatically on first sign-in.
    account instead, create it in **Authentication → Users** and sign in with the form.
 6. Keep `.data/` out of version control (already ignored) and never commit `.env.local`.
 
+### Demo without Supabase (no SQL to paste)
+
+The plan, reservations and host account also run against the local development store,
+with no database setup at all:
+
+```bash
+npm run build
+npm run demo:local     # http://localhost:3200
+```
+
+Every screen labels the storage mode it is actually using, so nothing claims to be
+Supabase when it isn't. Supabase remains the production path: applying
+[`supabase/apply-all.sql`](supabase/apply-all.sql) and running `npm start` switches the
+same build back to it.
+
 ### Where reservation data comes from
 
 Every reservation row carries a source, shown in the host UI and on the guest page:
