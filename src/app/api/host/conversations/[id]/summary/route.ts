@@ -51,7 +51,18 @@ export async function POST(
     return NextResponse.json({ summary });
   } catch (error) {
     if (error instanceof ConciergeError) {
-      return NextResponse.json({ error: error.message }, { status: 503 });
+      // Provider text can name accounts and quotas; it is logged, never shown.
+      console.error("[host/summary] model error", error.code, error.message);
+      const limited = error.code === "rate_limited";
+      return NextResponse.json(
+        {
+          error: limited
+            ? "The AI model has hit its free-tier limit for this minute. Try again shortly — the transcript is still saved."
+            : "The summary could not be generated right now. Please try again.",
+          code: error.code,
+        },
+        { status: limited ? 429 : 503, headers: limited ? { "Retry-After": "30" } : undefined },
+      );
     }
     console.error("[host/summary] failed", error);
     return NextResponse.json(
