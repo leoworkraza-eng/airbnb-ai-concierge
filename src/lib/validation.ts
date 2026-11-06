@@ -126,3 +126,21 @@ export const guestLoginSchema = z.object({
     .min(1, "Enter the surname on your booking.")
     .max(80),
 });
+
+export const guestAccountSignupSchema = z.object({
+  fullName: z.string().trim().min(2, "Enter your full name.").max(80),
+  email: z
+    .string()
+    .trim()
+    .email("Enter the email address from your booking.")
+    .max(160),
+  password: z
+    .string()
+    .min(8, "Use at least 8 characters.")
+    .max(72, "That password is too long."),
+});
+
+export const guestAccountLoginSchema = z.object({
+  email: z.string().trim().email("Enter your email address.").max(160),
+  password: z.string().min(1, "Enter your password.").max(200),
+});

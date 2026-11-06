@@ -79,6 +79,10 @@ export async function getHostSession(): Promise<HostSession | null> {
     const { data } = await supabase.auth.getUser();
     if (!data.user) return null;
 
+    // Guest accounts are Supabase users too. Their app metadata keeps them out
+    // of the host workspace even though both use the same auth cookie jar.
+    if (data.user.app_metadata?.role === "guest") return null;
+
     const repo = await getGuestRepo();
     const profile = await repo.ensureProfile({
       id: data.user.id,

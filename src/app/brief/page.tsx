@@ -340,9 +340,10 @@ export default function BriefPage() {
           </div>
           <p className="mt-4 text-[11.5px] leading-relaxed text-muted">
             Guest access uses the email and surname on the booking, creating a
-            profile with the stay and saved preferences. A one-click demo stay is
-            available on the sign-in page, and the demo host account is provisioned
-            on first use — no manual setup is required.
+            profile with the stay and saved preferences. An optional Supabase-backed
+            guest account adds password sign-in while keeping the same profile. A
+            one-click demo stay is available on the sign-in page, and the demo host
+            account is provisioned on first use — no manual setup is required.
           </p>
         </section>
 

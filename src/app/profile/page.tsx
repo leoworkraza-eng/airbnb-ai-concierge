@@ -13,6 +13,7 @@ import {
 import { GuestShell } from "@/components/guest/GuestShell";
 import { Card, Note, Pill } from "@/components/ui";
 import { getGuestRepo } from "@/lib/data";
+import { getGuestAccount } from "@/lib/guest-account";
 import { getGuestContext } from "@/lib/guest-context";
 import {
   chooseCurrentStay,
@@ -35,6 +36,7 @@ export default async function ProfilePage() {
 
   const { guest, property } = context;
   const repo = await getGuestRepo();
+  const account = await getGuestAccount();
 
   const reservation = await repo.getReservationForGuest(guest.id).catch(() => null);
   const email = reservation?.guestEmail?.trim() ?? "";
@@ -96,6 +98,7 @@ export default async function ProfilePage() {
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                {account ? <Pill tone="brand">Guest account</Pill> : null}
                 {activeStay ? (
                   <Pill
                     tone={
@@ -293,15 +296,27 @@ export default async function ProfilePage() {
                   <dt className="text-[10.5px] tracking-wide text-muted uppercase">
                     Sign-in
                   </dt>
-                  <dd className="mt-0.5 text-[13px]">Booking email + surname</dd>
+                  <dd className="mt-0.5 text-[13px]">
+                    {account ? "Email + password" : "Booking email + surname"}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-[10.5px] tracking-wide text-muted uppercase">
                     Password
                   </dt>
-                  <dd className="mt-0.5 text-[13px] text-muted">Not required</dd>
+                  <dd className="mt-0.5 text-[13px] text-muted">
+                    {account ? "Managed by Supabase" : "Not required"}
+                  </dd>
                 </div>
               </dl>
+              {!account ? (
+                <Link
+                  href={`/guest/signup?email=${encodeURIComponent(stayEmail)}`}
+                  className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-medium text-brand"
+                >
+                  Create a guest account
+                </Link>
+              ) : null}
             </Card>
 
             <Card className="p-5">

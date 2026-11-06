@@ -101,8 +101,15 @@ export default async function GuestLoginPage({
           <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
             The email and surname on your Casa Barcelona booking.
           </p>
+          <p className="mt-2 text-[12px] text-muted">
+            New here?{" "}
+            <Link href="/guest/signup" className="font-medium text-brand">
+              Create a guest account
+            </Link>{" "}
+            with your booking email.
+          </p>
 
-          <div className="mt-7">
+          <div className="mt-6">
             <GuestLoginForm initialEmail={email ?? ""} />
           </div>
 
@@ -128,6 +135,13 @@ export default async function GuestLoginPage({
               </p>
             ) : null}
           </div>
+
+          <p className="mt-4 text-center text-[11.5px] text-muted">
+            Have a guest account?{" "}
+            <Link href="/guest/account" className="font-medium text-brand">
+              Sign in with your password
+            </Link>
+          </p>
 
           <p className="mt-6 text-[12px] text-muted">
             Are you the host?{" "}
