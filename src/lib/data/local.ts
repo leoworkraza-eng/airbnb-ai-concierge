@@ -606,6 +606,15 @@ export class LocalRepository implements Repository {
     return found ? clone(found) : null;
   }
 
+  async getReservationByCode(code: string) {
+    const db = await load();
+    const normalized = code.trim().toUpperCase();
+    const found = db.reservations.find(
+      (reservation) => reservation.code.toUpperCase() === normalized,
+    );
+    return found ? clone(found) : null;
+  }
+
   async createReservation(hostId: string, input: CreateReservationInput) {
     return mutate((db) => {
       const property = db.properties.find(
@@ -647,6 +656,18 @@ export class LocalRepository implements Repository {
       );
       if (!reservation) return null;
       reservation.status = status;
+      reservation.updatedAt = new Date().toISOString();
+      return clone(reservation);
+    });
+  }
+
+  async attachReservationToGuest(reservationId: string, guestSessionId: string) {
+    return mutate((db) => {
+      const reservation = db.reservations.find(
+        (candidate) => candidate.id === reservationId,
+      );
+      if (!reservation) return null;
+      reservation.guestSessionId = guestSessionId;
       reservation.updatedAt = new Date().toISOString();
       return clone(reservation);
     });

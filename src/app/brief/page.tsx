@@ -106,7 +106,7 @@ const risks = [
 ];
 
 const demoSteps = [
-  "Open the guest experience: the stay, the record and the concierge.",
+  "Sign in with a reservation code, then open the stay, the record and the concierge.",
   "Ask for the Wi-Fi, then the washing machine — watch the tool call in the transcript.",
   "Report a heating fault. A real ticket with a code appears in the host dashboard.",
   "Ask for a two-day plan; open Plan, tick a stop off, add your own.",
@@ -146,8 +146,8 @@ export default function BriefPage() {
             truth and a direct line into the host&rsquo;s workflow.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/api/guest/start" className="btn h-11 bg-white px-5 text-ink hover:bg-[#F6EEE3]">
-              Enter as a guest <ArrowRight className="size-4" />
+            <Link href="/guest/login" className="btn h-11 bg-white px-5 text-ink hover:bg-[#F6EEE3]">
+              Guest sign in <ArrowRight className="size-4" />
             </Link>
             <Link
               href="/host/login"
@@ -331,16 +331,17 @@ export default function BriefPage() {
         <section className="rounded-[20px] border border-line bg-white p-6">
           <p className="eyebrow">Demo access</p>
           <div className="mt-3 flex flex-wrap gap-3">
-            <Link href="/api/guest/start" className="btn-primary h-11 px-5">
-              Guest experience <ArrowRight className="size-4" />
+            <Link href="/guest/login" className="btn-primary h-11 px-5">
+              Guest sign in <ArrowRight className="size-4" />
             </Link>
             <Link href="/host/login" className="btn-secondary h-11 px-5">
               Host dashboard <ArrowUpRight className="size-4" />
             </Link>
           </div>
           <p className="mt-4 text-[11.5px] leading-relaxed text-muted">
-            The host dashboard opens with one click — the demo host account is provisioned
-            on first use, so no manual account setup is required.
+            Guest access opens with a reservation code from the host. A one-click demo
+            stay is available on the sign-in page, and the demo host account is
+            provisioned on first use — no manual setup is required.
           </p>
         </section>
 

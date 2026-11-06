@@ -70,8 +70,8 @@ export default function LandingPage() {
             </dl>
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
-              <Link href="/api/guest/start" className="btn-primary h-12 px-6 text-[14.5px]">
-                Explore your stay <ArrowRight className="size-4" />
+              <Link href="/guest/login" className="btn-primary h-12 px-6 text-[14.5px]">
+                Guest sign in <ArrowRight className="size-4" />
               </Link>
               <Link href="/host/login" className="btn-secondary h-12 px-6 text-[14.5px]">
                 Host dashboard <ArrowUpRight className="size-4" />
@@ -286,8 +286,8 @@ export default function LandingPage() {
               <Link href="/host/login" className="btn-primary h-11 px-5">
                 Open the host dashboard <ArrowRight className="size-4" />
               </Link>
-              <Link href="/api/guest/start" className="btn-secondary h-11 px-5">
-                See the guest side
+              <Link href="/guest/login" className="btn-secondary h-11 px-5">
+                Guest sign in
               </Link>
             </div>
           </Reveal>
@@ -360,7 +360,7 @@ export default function LandingPage() {
                 step: "01",
                 icon: KeyRound,
                 title: "The guest opens their stay",
-                body: "Straight to the property — check-in, Wi-Fi, house rules and the concierge. No account, no download.",
+                body: "They enter the reservation code from their host and land on the verified property — check-in, Wi-Fi, house rules and the concierge. No account, no download.",
               },
               {
                 step: "02",
@@ -569,10 +569,10 @@ export default function LandingPage() {
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
-                href="/api/guest/start"
+                href="/guest/login"
                 className="btn h-12 bg-white px-7 text-ink hover:bg-[#F6EEE3]"
               >
-                Enter as a guest <ArrowRight className="size-4" />
+                Guest sign in <ArrowRight className="size-4" />
               </Link>
               <Link
                 href="/host/login"
@@ -598,8 +598,8 @@ export default function LandingPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-[12px] sm:flex-col">
-            <Link href="/api/guest/start" className="transition hover:text-white">
-              Guest experience
+            <Link href="/guest/login" className="transition hover:text-white">
+              Guest sign in
             </Link>
             <Link href="/host/login" className="transition hover:text-white">
               Host dashboard

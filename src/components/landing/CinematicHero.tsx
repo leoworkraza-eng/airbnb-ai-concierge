@@ -78,12 +78,20 @@ export function CinematicHero() {
             </Link>
           </nav>
 
-          <Link
-            href="/host/login"
-            className="hidden items-center gap-1.5 rounded-full border border-white/25 px-4 py-2 text-[12.5px] font-medium text-white/85 backdrop-blur-md transition hover:border-white/50 hover:text-white sm:inline-flex"
-          >
-            Host sign in <ArrowUpRight className="size-3.5" />
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/host/login"
+              className="hidden text-[12.5px] font-medium text-white/65 transition hover:text-white sm:inline-flex"
+            >
+              Host sign in
+            </Link>
+            <Link
+              href="/guest/login"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-[12.5px] font-medium text-white backdrop-blur-md transition hover:border-white/50"
+            >
+              Guest sign in <ArrowUpRight className="size-3.5" />
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -124,13 +132,13 @@ export function CinematicHero() {
 
             <div className="mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
               <Link
-                href="/api/guest/start"
+                href="/guest/login"
                 onClick={() => setLeaving(true)}
                 className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full bg-white px-8 py-4 text-[14.5px] font-medium text-ink transition hover:bg-[#F6EEE3] active:scale-[0.99]"
               >
                 <span className="absolute inset-0 -translate-x-full bg-[linear-gradient(90deg,transparent,rgba(226,43,79,0.16),transparent)] transition-transform duration-700 group-hover:translate-x-full" />
                 <Play className="size-3.5 fill-brand text-brand" />
-                Explore your stay
+                Guest sign in
                 <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
 
@@ -144,7 +152,7 @@ export function CinematicHero() {
             </div>
 
             <div className="mt-12 flex flex-wrap items-center gap-x-7 gap-y-3 text-[11px] text-white/55">
-              <span>No download · no guest account</span>
+              <span>No guest account · just your reservation code</span>
               <span className="hidden h-3 w-px bg-white/20 sm:block" />
               <span>Answers from the host&rsquo;s own record</span>
               <span className="hidden h-3 w-px bg-white/20 sm:block" />

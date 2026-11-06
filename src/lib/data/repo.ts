@@ -163,6 +163,7 @@ export interface Repository {
   listReservations(propertyIds: string[]): Promise<Reservation[]>;
   getReservation(id: string): Promise<Reservation | null>;
   getReservationForGuest(guestSessionId: string): Promise<Reservation | null>;
+  getReservationByCode(code: string): Promise<Reservation | null>;
   createReservation(
     hostId: string,
     input: CreateReservationInput,
@@ -176,6 +177,11 @@ export interface Repository {
   linkReservationToGuest(
     propertyId: string,
     guest: GuestSession,
+  ): Promise<Reservation | null>;
+  /** Attach a known reservation to a guest session created during sign-in. */
+  attachReservationToGuest(
+    reservationId: string,
+    guestSessionId: string,
   ): Promise<Reservation | null>;
 
   /* Itinerary --------------------------------------------------------------- */

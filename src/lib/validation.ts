@@ -120,3 +120,12 @@ export const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email address."),
   password: z.string().min(4, "Enter your password.").max(200),
 });
+
+export const guestLoginSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(4, "Enter your reservation code.")
+    .max(24, "That code is too long.")
+    .regex(/^[A-Za-z0-9 -]+$/, "Use the reservation code from your arrival message."),
+});

@@ -61,7 +61,7 @@ export function GuestShell({
               href="/api/guest/reset"
               className="hidden text-[12px] text-muted transition hover:text-ink sm:inline"
             >
-              End guest demo
+              Sign out
             </Link>
             <Link href="/host/login" className="btn-secondary btn-sm">
               Host sign in

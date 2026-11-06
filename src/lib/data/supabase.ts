@@ -652,6 +652,16 @@ export class SupabaseRepository implements Repository {
     return data ? mapReservation(data as Row) : null;
   }
 
+  async getReservationByCode(code: string) {
+    const { data, error } = await this.client
+      .from("reservations")
+      .select("*")
+      .eq("code", code)
+      .maybeSingle();
+    assertTable(error, "reservations");
+    return data ? mapReservation(data as Row) : null;
+  }
+
   async createReservation(hostId: string, input: CreateReservationInput) {
     const { data: property, error: propertyError } = await this.client
       .from("properties")
@@ -696,6 +706,20 @@ export class SupabaseRepository implements Repository {
       .update({ status, updated_at: new Date().toISOString() })
       .eq("id", id)
       .in("property_id", propertyIds)
+      .select("*")
+      .maybeSingle();
+    assertTable(error, "reservations");
+    return data ? mapReservation(data as Row) : null;
+  }
+
+  async attachReservationToGuest(reservationId: string, guestSessionId: string) {
+    const { data, error } = await this.client
+      .from("reservations")
+      .update({
+        guest_session_id: guestSessionId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", reservationId)
       .select("*")
       .maybeSingle();
     assertTable(error, "reservations");
