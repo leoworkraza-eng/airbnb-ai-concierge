@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ItineraryPage() {
   const context = await getGuestContext();
-  if (!context) redirect("/api/guest/start");
+  if (!context) redirect("/guest/login");
 
   const { guest, property } = context;
   const repo = await getGuestRepo();

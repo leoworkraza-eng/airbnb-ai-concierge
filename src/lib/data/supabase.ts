@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { env } from "../env";
+import { DEMO_GUEST } from "../demo-data";
 import type {
   ChatRole,
   Conversation,
@@ -662,6 +663,18 @@ export class SupabaseRepository implements Repository {
     return data ? mapReservation(data as Row) : null;
   }
 
+  async listReservationsByEmail(email: string) {
+    const normalized = email.trim();
+    if (!normalized) return [];
+    const { data, error } = await this.client
+      .from("reservations")
+      .select("*")
+      .ilike("guest_email", normalized)
+      .order("check_in_date", { ascending: false });
+    assertTable(error, "reservations");
+    return ((data ?? []) as Row[]).map(mapReservation);
+  }
+
   async createReservation(hostId: string, input: CreateReservationInput) {
     const { data: property, error: propertyError } = await this.client
       .from("properties")
@@ -747,6 +760,7 @@ export class SupabaseRepository implements Repository {
         .update({
           guest_session_id: guest.id,
           guest_name: guest.guestName,
+          guest_email: ((open as Row).guest_email as string) || DEMO_GUEST.email,
           check_in_date: guest.checkInDate,
           check_out_date: guest.checkOutDate,
           status: statusForDates(guest.checkInDate, guest.checkOutDate, todayISO(0)),
@@ -765,7 +779,7 @@ export class SupabaseRepository implements Repository {
         property_id: propertyId,
         guest_session_id: guest.id,
         guest_name: guest.guestName,
-        guest_email: "",
+        guest_email: DEMO_GUEST.email,
         check_in_date: guest.checkInDate,
         check_out_date: guest.checkOutDate,
         guests: 2,

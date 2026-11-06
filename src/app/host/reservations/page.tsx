@@ -196,8 +196,8 @@ export default async function HostReservationsPage() {
         </Card>
 
         <Note tone="neutral" className="bg-white">
-          A guest who opens the concierge with no reservation attached will claim the next
-          open sample reservation on that property. Attach real bookings from{" "}
+          Guests sign in with the email and surname on their booking, so every new
+          reservation needs a guest email. Add real bookings from{" "}
           <Link href="/host/reservations/new" className="font-medium text-brand">
             New reservation
           </Link>

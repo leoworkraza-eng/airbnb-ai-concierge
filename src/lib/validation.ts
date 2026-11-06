@@ -78,14 +78,7 @@ export const reservationSchema = z
   .object({
     propertyId: z.string().trim().min(1, "Choose a property."),
     guestName: z.string().trim().min(2, "A guest name is required.").max(80),
-    guestEmail: z
-      .string()
-      .trim()
-      .max(160)
-      .refine((value) => value === "" || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value), {
-        message: "Enter a valid email address or leave it empty.",
-      })
-      .default(""),
+    guestEmail: z.string().trim().email("Enter the guest's email address.").max(160),
     checkInDate: isoDate,
     checkOutDate: isoDate,
     guests: z.coerce
@@ -122,10 +115,14 @@ export const loginSchema = z.object({
 });
 
 export const guestLoginSchema = z.object({
-  code: z
+  email: z
     .string()
     .trim()
-    .min(4, "Enter your reservation code.")
-    .max(24, "That code is too long.")
-    .regex(/^[A-Za-z0-9 -]+$/, "Use the reservation code from your arrival message."),
+    .email("Enter the email address from your booking.")
+    .max(160),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, "Enter the surname on your booking.")
+    .max(80),
 });

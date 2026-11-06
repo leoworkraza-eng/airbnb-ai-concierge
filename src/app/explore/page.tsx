@@ -55,7 +55,7 @@ export default async function ExplorePage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const context = await getGuestContext();
-  if (!context) redirect("/api/guest/start");
+  if (!context) redirect("/guest/login");
 
   const { property, guest } = context;
   const { category } = await searchParams;

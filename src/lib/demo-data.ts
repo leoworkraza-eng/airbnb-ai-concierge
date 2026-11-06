@@ -140,11 +140,16 @@ export function demoProperty(hostId = DEMO_HOST.id): Property {
   };
 }
 
+export const DEMO_GUEST = {
+  name: "Alex Rivera",
+  email: "alex.rivera@example.com",
+} as const;
+
 export function demoGuestSession(propertyId = DEMO_PROPERTY_ID): GuestSession {
   return {
     id: "demo-guest-session",
     propertyId,
-    guestName: "Alex",
+    guestName: DEMO_GUEST.name,
     checkInDate: todayISO(0),
     checkOutDate: todayISO(4),
     preferences: { interests: [], notes: "", consent: false },

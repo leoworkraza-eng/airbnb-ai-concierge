@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { createGuestCookie } from "@/lib/auth";
 import { getGuestRepo } from "@/lib/data";
 import { MigrationRequiredError } from "@/lib/data/repo";
+import { chooseCurrentStay, surnameMatches } from "@/lib/guest-profile";
 import { rateLimit } from "@/lib/rate-limit";
 import { guestLoginSchema } from "@/lib/validation";
 
-/* Guests sign in with the reservation code the host gave them. The code only
-   resolves a stay; it never grants access to the host workspace. */
+/* Guests sign in with the identity already attached to their booking: the
+   email identifies the profile, the surname confirms it. No password, no
+   one-off reservation code. */
 
 export async function POST(request: Request) {
   const ip =
@@ -23,41 +25,37 @@ export async function POST(request: Request) {
   const parsed = guestLoginSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Enter your reservation code." },
+      { error: parsed.error.issues[0]?.message ?? "Enter your booking details." },
       { status: 400 },
     );
   }
 
-  // Accept "cb k4ycu" as well as the canonical "CB-K4YCU".
-  const compact = parsed.data.code.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  const code =
-    compact.length === 7 ? `${compact.slice(0, 2)}-${compact.slice(2)}` : compact;
+  const email = parsed.data.email.trim().toLowerCase();
 
   try {
     const repo = await getGuestRepo();
-    const reservation = await repo.getReservationByCode(code);
+    const stays = await repo.listReservationsByEmail(email);
+    const matches = stays.filter(
+      (stay) =>
+        stay.status !== "cancelled" &&
+        surnameMatches(stay.guestName, parsed.data.lastName),
+    );
+    const reservation = chooseCurrentStay(matches);
 
     if (!reservation) {
       return NextResponse.json(
         {
           error:
-            "That reservation code doesn't match a stay. Check the code in your arrival message and try again.",
+            "We couldn't match that email and surname to a booking. Check the details on your reservation and try again.",
         },
         { status: 404 },
-      );
-    }
-
-    if (reservation.status === "cancelled") {
-      return NextResponse.json(
-        { error: "That stay has been cancelled. Contact your host if this looks wrong." },
-        { status: 410 },
       );
     }
 
     const property = await repo.getProperty(reservation.propertyId);
     if (!property) {
       return NextResponse.json(
-        { error: "That reservation is no longer attached to a property." },
+        { error: "That booking is no longer attached to a property." },
         { status: 404 },
       );
     }
@@ -80,15 +78,15 @@ export async function POST(request: Request) {
     await createGuestCookie(guest.id);
     return NextResponse.json({ ok: true, redirect: "/welcome" });
   } catch (error) {
-    console.error("[guest/login] could not open the stay", error);
+    console.error("[guest/login] could not open the profile", error);
     if (error instanceof MigrationRequiredError) {
       return NextResponse.json(
-        { error: "Guest sign-in isn't set up on this deployment yet." },
+        { error: "Guest profiles aren't set up on this deployment yet." },
         { status: 503 },
       );
     }
     return NextResponse.json(
-      { error: "We couldn't open that stay. Please try again." },
+      { error: "We couldn't open that profile. Please try again." },
       { status: 500 },
     );
   }

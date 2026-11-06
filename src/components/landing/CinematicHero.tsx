@@ -152,7 +152,7 @@ export function CinematicHero() {
             </div>
 
             <div className="mt-12 flex flex-wrap items-center gap-x-7 gap-y-3 text-[11px] text-white/55">
-              <span>No guest account · just your reservation code</span>
+              <span>No password · just your booking email and surname</span>
               <span className="hidden h-3 w-px bg-white/20 sm:block" />
               <span>Answers from the host&rsquo;s own record</span>
               <span className="hidden h-3 w-px bg-white/20 sm:block" />

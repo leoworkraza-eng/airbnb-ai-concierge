@@ -164,6 +164,8 @@ export interface Repository {
   getReservation(id: string): Promise<Reservation | null>;
   getReservationForGuest(guestSessionId: string): Promise<Reservation | null>;
   getReservationByCode(code: string): Promise<Reservation | null>;
+  /** Every stay booked with this email, across properties. */
+  listReservationsByEmail(email: string): Promise<Reservation[]>;
   createReservation(
     hostId: string,
     input: CreateReservationInput,

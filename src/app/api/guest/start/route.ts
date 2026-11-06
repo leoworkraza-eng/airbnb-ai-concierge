@@ -3,6 +3,7 @@ import { createGuestCookie } from "@/lib/auth";
 import { getGuestContext } from "@/lib/guest-context";
 import { getGuestRepo } from "@/lib/data";
 import { MigrationRequiredError } from "@/lib/data/repo";
+import { DEMO_GUEST } from "@/lib/demo-data";
 import { todayISO } from "@/lib/utils";
 
 /* Creates the guest stay for the demo property and remembers it in a signed
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
   }
 
   // Starting the demo repeatedly must not grow the host's guest list. Reuse a
-  // stay that is still in residence instead of inserting another "Alex".
+  // stay that is still in residence instead of inserting another demo guest.
   const sessions = await repo.listGuestSessions([property.id]);
   const today = todayISO(0);
   const active = sessions.find(
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
     active ??
     (await repo.createGuestSession({
       propertyId: property.id,
-      guestName: "Alex",
+      guestName: DEMO_GUEST.name,
       checkInDate: todayISO(0),
       checkOutDate: todayISO(4),
       preferences: { interests: [], notes: "", consent: false },

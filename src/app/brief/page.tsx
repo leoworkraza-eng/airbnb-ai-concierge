@@ -106,7 +106,7 @@ const risks = [
 ];
 
 const demoSteps = [
-  "Sign in with a reservation code, then open the stay, the record and the concierge.",
+  "Sign in with the booking email and surname, then open the profile, the stay and the concierge.",
   "Ask for the Wi-Fi, then the washing machine — watch the tool call in the transcript.",
   "Report a heating fault. A real ticket with a code appears in the host dashboard.",
   "Ask for a two-day plan; open Plan, tick a stop off, add your own.",
@@ -339,9 +339,10 @@ export default function BriefPage() {
             </Link>
           </div>
           <p className="mt-4 text-[11.5px] leading-relaxed text-muted">
-            Guest access opens with a reservation code from the host. A one-click demo
-            stay is available on the sign-in page, and the demo host account is
-            provisioned on first use — no manual setup is required.
+            Guest access uses the email and surname on the booking, creating a
+            profile with the stay and saved preferences. A one-click demo stay is
+            available on the sign-in page, and the demo host account is provisioned
+            on first use — no manual setup is required.
           </p>
         </section>
 

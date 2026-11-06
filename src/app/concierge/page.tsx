@@ -27,7 +27,7 @@ export default async function ConciergePage({
   searchParams: Promise<{ prompt?: string }>;
 }) {
   const context = await getGuestContext();
-  if (!context) redirect("/api/guest/start");
+  if (!context) redirect("/guest/login");
 
   const { property, guest } = context;
   const { prompt } = await searchParams;

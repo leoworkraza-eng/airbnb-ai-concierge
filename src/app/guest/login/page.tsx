@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
-  ConciergeBell,
-  KeyRound,
+  Mail,
   ShieldCheck,
   Sparkles,
+  UserRound,
 } from "lucide-react";
 import { Logo } from "@/components/brand";
 import { Disclaimer } from "@/components/guest/GuestShell";
@@ -20,12 +20,12 @@ export const dynamic = "force-dynamic";
 export default async function GuestLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ code?: string }>;
+  searchParams: Promise<{ email?: string }>;
 }) {
   const existing = await getGuestContext();
   if (existing) redirect("/welcome");
 
-  const { code } = await searchParams;
+  const { email } = await searchParams;
   const repo = await getGuestRepo();
   const property = await repo.getPrimaryProperty().catch(() => null);
   const reservations = property
@@ -46,40 +46,40 @@ export default async function GuestLoginPage({
         <Logo tone="light" />
 
         <div className="relative max-w-md">
-          <p className="eyebrow text-white/40">Guest access</p>
+          <p className="eyebrow text-white/40">Guest profiles</p>
           <h1 className="mt-4 font-display text-[40px] leading-[1.06] text-white">
-            Your stay is already waiting.
+            Your booking is already your profile.
           </h1>
           <p className="mt-4 text-[14px] leading-relaxed text-white/55">
-            Enter the reservation code from your arrival message. No account, no
-            password — just the home your host has prepared.
+            Sign in with the email and surname on your reservation. We open the
+            right stay, with your preferences and booking history attached.
           </p>
 
           <div className="mt-8 space-y-3">
             {[
-              "The door code, Wi-Fi and house guide in one place",
-              "A concierge that answers from the verified property record",
-              "A problem reported once becomes a real ticket for the host",
-            ].map((item, index) => {
-              const Icon = [KeyRound, Sparkles, ConciergeBell][index];
-              return (
-                <div
-                  key={item}
-                  className="flex items-start gap-2.5 text-[12.5px] text-white/70"
-                >
-                  <span className="mt-0.5 grid size-4 place-items-center rounded-full bg-white/10">
-                    <Icon className="size-2.5 text-brand" />
-                  </span>
-                  {item}
-                </div>
-              );
-            })}
+              { icon: Mail, text: "The email address used for the booking" },
+              { icon: UserRound, text: "The surname on the reservation" },
+              {
+                icon: Sparkles,
+                text: "Your stay, saved preferences and history in one place",
+              },
+            ].map((item) => (
+              <div
+                key={item.text}
+                className="flex items-start gap-2.5 text-[12.5px] text-white/70"
+              >
+                <span className="mt-0.5 grid size-4 place-items-center rounded-full bg-white/10">
+                  <item.icon className="size-2.5 text-brand" />
+                </span>
+                {item.text}
+              </div>
+            ))}
           </div>
         </div>
 
         <div className="relative flex items-center gap-2 text-[11px] text-white/35">
           <ShieldCheck className="size-3.5" />
-          Prototype access — reservation codes are demonstration credentials.
+          Prototype access — profiles are linked to demonstration bookings.
         </div>
       </div>
 
@@ -96,14 +96,14 @@ export default async function GuestLoginPage({
           </Link>
 
           <h2 className="mt-5 text-[26px] leading-tight font-semibold">
-            Sign in to your stay
+            Sign in to your profile
           </h2>
           <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
-            Use the reservation code your host sent with your arrival details.
+            The email and surname on your Casa Barcelona booking.
           </p>
 
           <div className="mt-7">
-            <GuestLoginForm initialCode={code ?? ""} />
+            <GuestLoginForm initialEmail={email ?? ""} />
           </div>
 
           <div className="my-6 flex items-center gap-3 text-[10.5px] tracking-[0.18em] text-muted uppercase">
@@ -115,16 +115,16 @@ export default async function GuestLoginPage({
           <div className="rounded-2xl border border-line bg-white p-4">
             <p className="text-[13px] font-semibold">Just exploring?</p>
             <p className="mt-1 text-[12px] leading-relaxed text-muted">
-              Open Alex&rsquo;s demo stay at Casa Barcelona. No code needed.
+              Open {demo?.guestName ?? "Alex Rivera"}&rsquo;s demo profile at Casa
+              Barcelona. No details needed.
             </p>
             <a href="/api/guest/start" className="btn-secondary mt-3 h-10 w-full">
               Open the demo stay <ArrowRight className="size-4" />
             </a>
-            {demo ? (
+            {demo?.guestEmail ? (
               <p className="mt-2 text-center text-[10.5px] text-muted">
-                Demo code <span className="font-mono text-ink-soft">{demo.code}</span>
-                {" · "}
-                {demo.guestName}
+                Demo profile{" "}
+                <span className="text-ink-soft">{demo.guestEmail}</span>
               </p>
             ) : null}
           </div>

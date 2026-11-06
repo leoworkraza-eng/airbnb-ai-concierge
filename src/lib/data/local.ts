@@ -20,6 +20,7 @@ import type {
 import { newReservationCode, statusForDates } from "../reservations";
 import { slotRank } from "../itinerary";
 import {
+  DEMO_GUEST,
   DEMO_HOST,
   DEMO_PROPERTY_ID,
   demoPropertyInput,
@@ -615,6 +616,16 @@ export class LocalRepository implements Repository {
     return found ? clone(found) : null;
   }
 
+  async listReservationsByEmail(email: string) {
+    const db = await load();
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) return [];
+    return db.reservations
+      .filter((reservation) => reservation.guestEmail.toLowerCase() === normalized)
+      .sort((a, b) => b.checkInDate.localeCompare(a.checkInDate))
+      .map(clone);
+  }
+
   async createReservation(hostId: string, input: CreateReservationInput) {
     return mutate((db) => {
       const property = db.properties.find(
@@ -690,6 +701,7 @@ export class LocalRepository implements Repository {
       if (open) {
         open.guestSessionId = guest.id;
         open.guestName = guest.guestName;
+        open.guestEmail ||= DEMO_GUEST.email;
         open.checkInDate = guest.checkInDate;
         open.checkOutDate = guest.checkOutDate;
         open.status = statusForDates(guest.checkInDate, guest.checkOutDate, todayISO(0));
@@ -704,7 +716,7 @@ export class LocalRepository implements Repository {
         propertyId,
         guestSessionId: guest.id,
         guestName: guest.guestName,
-        guestEmail: "",
+        guestEmail: DEMO_GUEST.email,
         checkInDate: guest.checkInDate,
         checkOutDate: guest.checkOutDate,
         guests: 2,

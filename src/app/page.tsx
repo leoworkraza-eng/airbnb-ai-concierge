@@ -360,7 +360,7 @@ export default function LandingPage() {
                 step: "01",
                 icon: KeyRound,
                 title: "The guest opens their stay",
-                body: "They enter the reservation code from their host and land on the verified property — check-in, Wi-Fi, house rules and the concierge. No account, no download.",
+                body: "They sign in with the email and surname on their booking and land on their guest profile — check-in, Wi-Fi, house rules, stay history and the concierge. No password, no download.",
               },
               {
                 step: "02",

@@ -7,6 +7,7 @@ import {
   House,
   KeyRound,
   LifeBuoy,
+  UserRound,
 } from "lucide-react";
 import { Logo } from "@/components/brand";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ const tabs = [
   { id: "concierge", label: "Concierge", href: "/concierge", icon: ConciergeBell },
   { id: "explore", label: "Explore", href: "/explore", icon: Compass },
   { id: "support", label: "Support", href: "/support", icon: LifeBuoy },
+  { id: "profile", label: "Profile", href: "/profile", icon: UserRound },
 ] as const;
 
 export type GuestTab = (typeof tabs)[number]["id"];

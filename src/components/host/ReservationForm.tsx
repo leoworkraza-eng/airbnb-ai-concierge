@@ -85,7 +85,11 @@ export function ReservationForm({
             </select>
           </Field>
 
-          <Field label="Guest name" htmlFor="guestName">
+          <Field
+            label="Guest name"
+            htmlFor="guestName"
+            hint="Include the surname used for guest sign-in."
+          >
             <input
               id="guestName"
               required
@@ -97,10 +101,15 @@ export function ReservationForm({
               placeholder="Ana Ruiz"
             />
           </Field>
-          <Field label="Guest email" htmlFor="guestEmail" hint="Optional.">
+          <Field
+            label="Guest email"
+            htmlFor="guestEmail"
+            hint="Used for the guest's profile and sign-in."
+          >
             <input
               id="guestEmail"
               type="email"
+              required
               value={form.guestEmail}
               onChange={(event) => set("guestEmail")(event.target.value)}
               className="field-input"

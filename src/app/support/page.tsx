@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
 
 export default async function SupportPage() {
   const context = await getGuestContext();
-  if (!context) redirect("/api/guest/start");
+  if (!context) redirect("/guest/login");
 
   const { property, guest } = context;
   const repo = await getGuestRepo();
