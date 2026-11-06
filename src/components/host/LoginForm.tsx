@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, Lock } from "lucide-react";
 
@@ -90,9 +91,16 @@ export function LoginForm({
       </div>
 
       {error ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-[12.5px] text-red-800">
-          {error}
-        </p>
+        <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-[12.5px] text-red-800">
+          <p>{error}</p>
+          <p className="mt-1.5 text-[12px] text-red-900/80">
+            No account yet?{" "}
+            <Link href="/host/signup" className="font-semibold underline underline-offset-2">
+              Create one in a minute
+            </Link>
+            .
+          </p>
+        </div>
       ) : null}
 
       <button type="submit" disabled={submitting} className="btn-primary h-11 w-full">

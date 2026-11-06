@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Building2, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, Building2, ShieldCheck, Sparkles, UserPlus } from "lucide-react";
 import { Logo } from "@/components/brand";
 import { LoginForm } from "@/components/host/LoginForm";
 import { Disclaimer } from "@/components/guest/GuestShell";
@@ -87,6 +87,22 @@ export default async function HostLoginPage({
               : "Sign in with the demo host account to explore the dashboard."}
           </p>
 
+          {isSupabaseConfigured ? (
+            <div className="mt-5 flex items-start gap-3 rounded-2xl border border-line bg-white px-4 py-3">
+              <UserPlus className="mt-0.5 size-4 shrink-0 text-brand" />
+              <p className="text-[12.5px] leading-snug text-muted">
+                <span className="font-medium text-ink">First time here?</span>{" "}
+                <Link
+                  href="/host/signup"
+                  className="font-semibold text-brand underline-offset-2 hover:underline"
+                >
+                  Create a host account
+                </Link>{" "}
+                — confirmed immediately, with the starter property included.
+              </p>
+            </div>
+          ) : null}
+
           {setup === "property" ? (
             <Note
               tone="warning"
@@ -112,16 +128,6 @@ export default async function HostLoginPage({
               ? " Host authentication runs through Supabase; the demo account is provisioned on first use."
               : " Without Supabase configured, this is the local development account."}
           </Note>
-
-          {isSupabaseConfigured ? (
-            <p className="mt-4 text-[11.5px] leading-relaxed text-muted">
-              Want your own account?{" "}
-              <Link href="/host/signup" className="font-medium text-brand">
-                Create a host account
-              </Link>{" "}
-              — it is confirmed immediately, and the starter property is seeded for you.
-            </p>
-          ) : null}
 
           <div className="mt-8 border-t border-line pt-5">
             <Disclaimer />

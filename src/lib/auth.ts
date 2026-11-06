@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { env, isSupabaseConfigured } from "./env";
 import { getGuestRepo, getHostRepo } from "./data";
-import { DEMO_HOST } from "./demo-data";
+import { DEMO_HOST, demoPropertyInput } from "./demo-data";
 import type { HostSession } from "./types";
 import { createSupabaseServerClient } from "./supabase/server";
 import { createSupabaseAdminClient } from "./data/supabase";
@@ -236,7 +236,15 @@ export async function signUpHost(input: {
   }
 
   const repo = await getGuestRepo();
-  await repo.ensureProfile({ id: data.user.id, email, fullName });
+  const profile = await repo.ensureProfile({ id: data.user.id, email, fullName });
+
+  // A new account must land on a workspace that can answer guests. Seeding
+  // here uses the service-role client, so a first page render cannot race the
+  // row-level policy that scopes properties to the signed-in host.
+  const existing = await repo.listProperties(profile.id);
+  if (!existing.length) {
+    await repo.createProperty(profile.id, demoPropertyInput(profile.id));
+  }
 
   return { ok: true };
 }
