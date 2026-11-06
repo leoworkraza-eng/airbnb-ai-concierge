@@ -101,22 +101,23 @@ A matching `profiles` row is created automatically on first sign-in.
 1. Create a project at <https://supabase.com>.
 2. Open **SQL Editor** and run [`supabase/schema.sql`](supabase/schema.sql). This creates
    all seven tables, indexes, the `updated_at` triggers and Row Level Security policies.
-3. In the same SQL editor, run the two additive migrations:
+3. In the same SQL editor, run
    [`supabase/migrations/2026-11-reservations-and-integrations.sql`](supabase/migrations/2026-11-reservations-and-integrations.sql)
-   (the `reservations` and `integrations` tables) and
-   [`supabase/migrations/2026-12-itinerary.sql`](supabase/migrations/2026-12-itinerary.sql)
-   (the `itinerary_items` table). Both are additive: no existing table, column or policy
-   is dropped. Until they are applied the app still runs — the reservation and plan
-   screens show a migration notice instead of failing, and the rest of the guest
-   experience is unaffected. To do it in one paste, use
-   [`supabase/apply-all.sql`](supabase/apply-all.sql), which contains both files in
-   order and is safe to re-run.
+   (the `reservations` and `integrations` tables). It is additive: no existing table,
+   column or policy is dropped. Until it is applied the app still runs — the reservation
+   and Airbnb connection screens explain that the tables are missing, and the rest of the
+   product is unaffected. [`supabase/apply-all.sql`](supabase/apply-all.sql) contains the
+   same SQL if you prefer one file to paste.
+
+   The guest plan needs no migration: it lives in the `preferences` JSON column of the
+   guest's session, which every deployment already has.
 4. Copy the project URL, anon key and service-role key into `.env.local`.
 5. Open `/host/login` and press **Enter the demo host dashboard**. The demo host
    (`host@casabarcelona.demo`) is provisioned on first use with the service-role key and
    signed in through Supabase auth, so no manual account is needed; the profile row and
    the starter property (Casa Barcelona) are created automatically. To use your own
-   account instead, create it in **Authentication → Users** and sign in with the form.
+   account instead, create one at `/host/signup` — it is confirmed immediately — or add
+   it in **Authentication → Users** and sign in with the form.
 6. Keep `.data/` out of version control (already ignored) and never commit `.env.local`.
 
 ### Demo without Supabase (no SQL to paste)

@@ -54,6 +54,15 @@ export const propertySchema = z.object({
 
 export const statusSchema = z.enum(["new", "in_progress", "resolved"]);
 
+export const signupSchema = z.object({
+  fullName: z.string().trim().max(80).optional().default(""),
+  email: z.string().trim().email("Enter a valid email address.").max(160),
+  password: z
+    .string()
+    .min(8, "Use at least 8 characters.")
+    .max(72, "That password is too long."),
+});
+
 export const reservationStatusSchema = z.enum([
   "upcoming",
   "in_house",

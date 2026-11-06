@@ -115,9 +115,11 @@ export default async function HostLoginPage({
 
           {isSupabaseConfigured ? (
             <p className="mt-4 text-[11.5px] leading-relaxed text-muted">
-              For your own account, create it in Supabase → Authentication → Users and
-              sign in above. A profile row is created on first sign-in, and the starter
-              property is seeded for you.
+              Want your own account?{" "}
+              <Link href="/host/signup" className="font-medium text-brand">
+                Create a host account
+              </Link>{" "}
+              — it is confirmed immediately, and the starter property is seeded for you.
             </p>
           ) : null}
 

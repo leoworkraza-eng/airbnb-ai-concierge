@@ -1,17 +1,14 @@
 -- ---------------------------------------------------------------------------
--- Airbnb AI Concierge — every additive migration in one paste.
+-- Airbnb AI Concierge — the one additive migration that is still required.
 --
--- Run this once in the Supabase SQL editor after supabase/schema.sql. Both
--- sections are idempotent (create ... if not exists, drop policy if exists), so
--- re-running it is safe and changes nothing that already exists.
+-- Run this once in the Supabase SQL editor after supabase/schema.sql. It is
+-- idempotent (create ... if not exists, drop policy if exists), so re-running it
+-- is safe and changes nothing that already exists.
 --
--- It is exactly the two files in supabase/migrations, in order. Run those
--- individually instead if you prefer.
+-- The guest plan is NOT here: it is stored in guest_sessions.preferences, a
+-- jsonb column that already exists in every deployment, so it needs no schema
+-- change at all.
 -- ---------------------------------------------------------------------------
-
--- ===========================================================================
--- 1. Reservation management + Airbnb connection layer
--- ===========================================================================
 
 create table if not exists public.reservations (
   id uuid primary key default gen_random_uuid(),
@@ -104,45 +101,3 @@ comment on table public.reservations is
   'Stays that the concierge can answer from. source = demo/manual here; airbnb rows are reserved for an authorised integration.';
 comment on table public.integrations is
   'External connection records. Credentials are service-role only and never sent to the browser.';
-
--- ===========================================================================
--- 2. Guest itinerary
--- ===========================================================================
-
-create table if not exists public.itinerary_items (
-  id uuid primary key default gen_random_uuid(),
-  guest_session_id uuid not null references public.guest_sessions(id) on delete cascade,
-  property_id uuid not null references public.properties(id) on delete cascade,
-  day integer not null check (day between 1 and 14),
-  slot text not null check (slot in ('morning', 'afternoon', 'evening')),
-  title text not null,
-  place_id text,
-  notes text not null default '',
-  done boolean not null default false,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create index if not exists itinerary_guest_idx
-  on public.itinerary_items(guest_session_id, day, slot);
-create index if not exists itinerary_property_idx
-  on public.itinerary_items(property_id);
-
-drop trigger if exists itinerary_touch_updated_at on public.itinerary_items;
-create trigger itinerary_touch_updated_at
-  before update on public.itinerary_items
-  for each row execute function public.touch_updated_at();
-
-alter table public.itinerary_items enable row level security;
-
-drop policy if exists "itinerary_select_owned" on public.itinerary_items;
-create policy "itinerary_select_owned" on public.itinerary_items
-  for select using (
-    exists (
-      select 1 from public.properties p
-      where p.id = itinerary_items.property_id and p.host_id = auth.uid()
-    )
-  );
-
-comment on table public.itinerary_items is
-  'A guest''s saved day-by-day plan. Scoped to one guest session; written only by server routes and the concierge tools.';

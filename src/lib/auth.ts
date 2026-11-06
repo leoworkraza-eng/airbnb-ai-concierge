@@ -183,6 +183,64 @@ export async function signInHost(
   return { ok: true, session };
 }
 
+/* Real account creation, without the Supabase dashboard.
+
+   The admin client creates the account with a confirmed email, then the normal
+   server client signs in so the session and its cookies are genuine. */
+
+export async function signUpHost(input: {
+  email: string;
+  password: string;
+  fullName?: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!isSupabaseConfigured) {
+    return {
+      ok: false,
+      error:
+        "Accounts need Supabase. In local mode, use the demo host account shown on the sign-in page.",
+    };
+  }
+
+  const email = input.email.trim().toLowerCase();
+  const fullName = input.fullName?.trim() || email.split("@")[0];
+  const admin = createSupabaseAdminClient();
+
+  const created = await admin.auth.admin.createUser({
+    email,
+    password: input.password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  });
+
+  if (created.error) {
+    const exists = /already|registered|exists/i.test(created.error.message);
+    return {
+      ok: false,
+      error: exists
+        ? "An account with that email already exists. Sign in instead."
+        : "The account could not be created. Please try again.",
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password: input.password,
+  });
+
+  if (error || !data.user) {
+    return {
+      ok: false,
+      error: "The account was created, but signing in failed. Try the sign-in form.",
+    };
+  }
+
+  const repo = await getGuestRepo();
+  await repo.ensureProfile({ id: data.user.id, email, fullName });
+
+  return { ok: true };
+}
+
 /* One-click entry for the demo host.
 
    Signing up through the Supabase dashboard is fine for a real account, but a

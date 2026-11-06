@@ -251,7 +251,11 @@ function mapItineraryItem(row: Row): ItineraryItem {
   };
 }
 
-const ITINERARY_MIGRATION = "supabase/migrations/2026-12-itinerary.sql";
+const itinerarySlotOrder: Record<ItinerarySlot, number> = {
+  morning: 0,
+  afternoon: 1,
+  evening: 2,
+};
 
 function assertTable(
   error: { message?: string; code?: string } | null,
@@ -786,34 +790,64 @@ export class SupabaseRepository implements Repository {
     return mapIntegration(data as Row);
   }
 
-  async listItinerary(guestSessionId: string) {
+  /* The plan lives in guest_sessions.preferences.itinerary, a jsonb column that
+     already exists in every deployment. It is guest-scoped, read and written in
+     one place, and needs no migration before the product works. */
+
+  private async readGuestPreferences(guestSessionId: string): Promise<Row> {
     const { data, error } = await this.client
-      .from("itinerary_items")
-      .select("*")
-      .eq("guest_session_id", guestSessionId)
-      .order("day", { ascending: true })
-      .order("created_at", { ascending: true });
-    assertTable(error, "itinerary_items", ITINERARY_MIGRATION);
-    return ((data ?? []) as Row[]).map(mapItineraryItem);
+      .from("guest_sessions")
+      .select("preferences")
+      .eq("id", guestSessionId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return ((data?.preferences ?? {}) as Row) ?? {};
+  }
+
+  private async saveGuestPreferences(guestSessionId: string, preferences: Row) {
+    const { error } = await this.client
+      .from("guest_sessions")
+      .update({ preferences })
+      .eq("id", guestSessionId);
+    if (error) throw new Error(error.message);
+  }
+
+  private static itineraryRows(preferences: Row): Row[] {
+    return Array.isArray(preferences.itinerary) ? ([...preferences.itinerary] as Row[]) : [];
+  }
+
+  async listItinerary(guestSessionId: string) {
+    const preferences = await this.readGuestPreferences(guestSessionId);
+    return SupabaseRepository.itineraryRows(preferences)
+      .map(mapItineraryItem)
+      .sort(
+        (a, b) =>
+          a.day - b.day || itinerarySlotOrder[a.slot] - itinerarySlotOrder[b.slot],
+      );
   }
 
   async addItineraryItem(input: CreateItineraryItemInput) {
-    const { data, error } = await this.client
-      .from("itinerary_items")
-      .insert({
-        guest_session_id: input.guestSessionId,
-        property_id: input.propertyId,
-        day: input.day,
-        slot: input.slot,
-        title: input.title,
-        place_id: input.placeId ?? null,
-        notes: input.notes ?? "",
-      })
-      .select("*")
-      .single();
-    assertTable(error, "itinerary_items", ITINERARY_MIGRATION);
-    if (!data) throw new Error("The stop could not be saved.");
-    return mapItineraryItem(data as Row);
+    const preferences = await this.readGuestPreferences(input.guestSessionId);
+    const rows = SupabaseRepository.itineraryRows(preferences);
+    const now = new Date().toISOString();
+
+    const row: Row = {
+      id: crypto.randomUUID(),
+      guest_session_id: input.guestSessionId,
+      property_id: input.propertyId,
+      day: input.day,
+      slot: input.slot,
+      title: input.title,
+      place_id: input.placeId ?? null,
+      notes: input.notes ?? "",
+      done: false,
+      created_at: now,
+      updated_at: now,
+    };
+
+    rows.push(row);
+    await this.saveGuestPreferences(input.guestSessionId, { ...preferences, itinerary: rows });
+    return mapItineraryItem(row);
   }
 
   async updateItineraryItem(
@@ -821,40 +855,35 @@ export class SupabaseRepository implements Repository {
     guestSessionId: string,
     patch: { done?: boolean; title?: string; notes?: string },
   ) {
-    const payload: Row = { updated_at: new Date().toISOString() };
-    if (patch.done !== undefined) payload.done = patch.done;
-    if (patch.title !== undefined) payload.title = patch.title;
-    if (patch.notes !== undefined) payload.notes = patch.notes;
+    const preferences = await this.readGuestPreferences(guestSessionId);
+    const rows = SupabaseRepository.itineraryRows(preferences);
+    const index = rows.findIndex((row) => row.id === id);
+    if (index === -1) return null;
 
-    const { data, error } = await this.client
-      .from("itinerary_items")
-      .update(payload)
-      .eq("id", id)
-      .eq("guest_session_id", guestSessionId)
-      .select("*")
-      .maybeSingle();
-    assertTable(error, "itinerary_items", ITINERARY_MIGRATION);
-    return data ? mapItineraryItem(data as Row) : null;
+    const row: Row = { ...rows[index] };
+    if (patch.done !== undefined) row.done = patch.done;
+    if (patch.title !== undefined) row.title = patch.title;
+    if (patch.notes !== undefined) row.notes = patch.notes;
+    row.updated_at = new Date().toISOString();
+    rows[index] = row;
+
+    await this.saveGuestPreferences(guestSessionId, { ...preferences, itinerary: rows });
+    return mapItineraryItem(row);
   }
 
   async removeItineraryItem(id: string, guestSessionId: string) {
-    const { data, error } = await this.client
-      .from("itinerary_items")
-      .delete()
-      .eq("id", id)
-      .eq("guest_session_id", guestSessionId)
-      .select("id")
-      .maybeSingle();
-    assertTable(error, "itinerary_items", ITINERARY_MIGRATION);
-    return Boolean(data);
+    const preferences = await this.readGuestPreferences(guestSessionId);
+    const rows = SupabaseRepository.itineraryRows(preferences);
+    const next = rows.filter((row) => row.id !== id);
+    if (next.length === rows.length) return false;
+
+    await this.saveGuestPreferences(guestSessionId, { ...preferences, itinerary: next });
+    return true;
   }
 
   async clearItinerary(guestSessionId: string) {
-    const { error } = await this.client
-      .from("itinerary_items")
-      .delete()
-      .eq("guest_session_id", guestSessionId);
-    assertTable(error, "itinerary_items", ITINERARY_MIGRATION);
+    const preferences = await this.readGuestPreferences(guestSessionId);
+    await this.saveGuestPreferences(guestSessionId, { ...preferences, itinerary: [] });
   }
 
   async getProfile(id: string) {
