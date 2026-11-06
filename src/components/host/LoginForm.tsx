@@ -9,6 +9,23 @@ export function LoginForm({
 }: {
   demo?: { email: string; password: string };
 }) {
+  async function enterDemo() {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const response = await fetch("/api/host/demo", { method: "POST" });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Could not open the demo dashboard.");
+
+      router.replace("/host");
+      router.refresh();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not open the demo dashboard.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const router = useRouter();
   const [email, setEmail] = useState(demo?.email ?? "");
   const [password, setPassword] = useState(demo?.password ?? "");
@@ -85,16 +102,26 @@ export function LoginForm({
       </button>
 
       {demo ? (
-        <button
-          type="button"
-          onClick={() => {
-            setEmail(demo.email);
-            setPassword(demo.password);
-          }}
-          className="w-full rounded-xl border border-dashed border-line px-3 py-2 text-[11.5px] text-muted transition hover:border-ink/25 hover:text-ink"
-        >
-          Fill the demo host credentials
-        </button>
+        <>
+          <div className="flex items-center gap-3 text-[10.5px] tracking-[0.18em] text-muted uppercase">
+            <span className="h-px flex-1 bg-line" />
+            or
+            <span className="h-px flex-1 bg-line" />
+          </div>
+          <button
+            type="button"
+            onClick={() => void enterDemo()}
+            disabled={submitting}
+            className="btn-secondary h-11 w-full"
+          >
+            Enter the demo host dashboard
+            <ArrowRight className="size-4" />
+          </button>
+          <p className="text-center text-[11px] leading-relaxed text-muted">
+            Signs in as <span className="font-mono">{demo.email}</span>. The account is
+            created automatically on first use — no Supabase dashboard step.
+          </p>
+        </>
       ) : null}
     </form>
   );

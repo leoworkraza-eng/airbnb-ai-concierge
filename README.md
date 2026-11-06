@@ -112,9 +112,11 @@ A matching `profiles` row is created automatically on first sign-in.
    [`supabase/apply-all.sql`](supabase/apply-all.sql), which contains both files in
    order and is safe to re-run.
 4. Copy the project URL, anon key and service-role key into `.env.local`.
-5. Create a host user in **Authentication → Users** (or use the sign-up flow of your
-   choice), then sign in at `/host/login`. The first sign-in creates the profile row, and
-   a starter property (Casa Barcelona) is seeded so the demo works immediately.
+5. Open `/host/login` and press **Enter the demo host dashboard**. The demo host
+   (`host@casabarcelona.demo`) is provisioned on first use with the service-role key and
+   signed in through Supabase auth, so no manual account is needed; the profile row and
+   the starter property (Casa Barcelona) are created automatically. To use your own
+   account instead, create it in **Authentication → Users** and sign in with the form.
 6. Keep `.data/` out of version control (already ignored) and never commit `.env.local`.
 
 ### Where reservation data comes from

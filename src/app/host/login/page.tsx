@@ -100,23 +100,26 @@ export default async function HostLoginPage({
           ) : null}
 
           <div className="mt-7">
-            <LoginForm demo={isSupabaseConfigured ? undefined : demoHostHint} />
+            <LoginForm demo={demoHostHint} />
           </div>
 
-          {!isSupabaseConfigured ? (
-            <Note tone="neutral" className="mt-5" icon={<ShieldCheck className="size-4" />}>
-              <span className="font-medium text-ink-soft">Demo mode.</span> Without
-              Supabase configured, host sign-in uses the local development account:{" "}
-              <span className="font-mono text-[11.5px]">{demoHostHint.email}</span> /{" "}
-              <span className="font-mono text-[11.5px]">{demoHostHint.password}</span>.
-              Configure Supabase for real multi-user authentication.
-            </Note>
-          ) : (
+          <Note tone="neutral" className="mt-5" icon={<ShieldCheck className="size-4" />}>
+            <span className="font-medium text-ink-soft">Demo credentials.</span>{" "}
+            <span className="font-mono text-[11.5px]">{demoHostHint.email}</span> /{" "}
+            <span className="font-mono text-[11.5px]">{demoHostHint.password}</span>. Use
+            either the button above or these details in the form.
+            {isSupabaseConfigured
+              ? " Host authentication runs through Supabase; the demo account is provisioned on first use."
+              : " Without Supabase configured, this is the local development account."}
+          </Note>
+
+          {isSupabaseConfigured ? (
             <p className="mt-4 text-[11.5px] leading-relaxed text-muted">
-              Create host users in Supabase → Authentication → Users. A profile row is
-              created automatically on first sign-in.
+              For your own account, create it in Supabase → Authentication → Users and
+              sign in above. A profile row is created on first sign-in, and the starter
+              property is seeded for you.
             </p>
-          )}
+          ) : null}
 
           <div className="mt-8 border-t border-line pt-5">
             <Disclaimer />

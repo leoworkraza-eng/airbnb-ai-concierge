@@ -6,6 +6,7 @@ import { getGuestRepo, getHostRepo } from "./data";
 import { DEMO_HOST } from "./demo-data";
 import type { HostSession } from "./types";
 import { createSupabaseServerClient } from "./supabase/server";
+import { createSupabaseAdminClient } from "./data/supabase";
 
 /* ---------------------------------------------------------------------------
    Sessions
@@ -180,6 +181,90 @@ export async function signInHost(
   });
 
   return { ok: true, session };
+}
+
+/* One-click entry for the demo host.
+
+   Signing up through the Supabase dashboard is fine for a real account, but a
+   demo cannot depend on it: this provisions the demo host on first use with the
+   service-role client (email already confirmed), then signs in normally so the
+   session still comes from Supabase auth. Idempotent — later calls just sign in. */
+
+async function provisionDemoHostAccount() {
+  const admin = createSupabaseAdminClient();
+  const email = env.demoHostEmail;
+
+  const created = await admin.auth.admin.createUser({
+    email,
+    password: env.demoHostPassword,
+    email_confirm: true,
+    user_metadata: { full_name: DEMO_HOST.fullName },
+  });
+
+  if (!created.error) return;
+  if (!/already|registered|exists/i.test(created.error.message)) {
+    throw new Error(created.error.message);
+  }
+
+  // The account exists with a different password: restore the documented one so
+  // the demo button always works on this project.
+  const listed = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+  const user = listed.data?.users.find(
+    (candidate) => candidate.email?.toLowerCase() === email.toLowerCase(),
+  );
+  if (!user) throw new Error("The demo host could not be found in Supabase auth.");
+
+  const updated = await admin.auth.admin.updateUserById(user.id, {
+    password: env.demoHostPassword,
+    email_confirm: true,
+  });
+  if (updated.error) throw new Error(updated.error.message);
+}
+
+export async function enterDemoHost(): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!isSupabaseConfigured) {
+    const result = await signInHost(env.demoHostEmail, env.demoHostPassword);
+    return result.ok ? { ok: true } : { ok: false, error: result.error };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const signIn = () =>
+    supabase.auth.signInWithPassword({
+      email: env.demoHostEmail,
+      password: env.demoHostPassword,
+    });
+
+  let { data } = await signIn();
+
+  if (!data?.user) {
+    try {
+      await provisionDemoHostAccount();
+    } catch (error) {
+      console.error("[host] Could not provision the demo account", error);
+      return {
+        ok: false,
+        error:
+          "The demo host account could not be created automatically. Sign in with a Supabase account instead, or check the service-role key.",
+      };
+    }
+    ({ data } = await signIn());
+  }
+
+  if (!data?.user) {
+    return {
+      ok: false,
+      error: "The demo host account exists but sign-in failed. Try the form with the credentials shown on this page.",
+    };
+  }
+
+  const repo = await getGuestRepo();
+  await repo.ensureProfile({
+    id: data.user.id,
+    email: env.demoHostEmail,
+    fullName: DEMO_HOST.fullName,
+  });
+
+  return { ok: true };
 }
 
 export async function signOutHost() {

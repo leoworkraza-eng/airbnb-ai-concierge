@@ -73,6 +73,9 @@ export function CinematicHero() {
             <a href="#for-hosts" className="transition hover:text-white">
               For hosts
             </a>
+            <Link href="/brief" className="transition hover:text-white">
+              The brief
+            </Link>
           </nav>
 
           <Link
@@ -92,7 +95,14 @@ export function CinematicHero() {
               Eixample · Barcelona
             </p>
 
-            <h1 className="mt-7 text-[clamp(2.9rem,8.2vw,6.4rem)] leading-[0.92] font-semibold tracking-[-0.04em] text-white">
+            <p className="mt-6 flex flex-wrap items-center gap-2.5 text-[10.5px] font-semibold tracking-[0.22em] text-white/60 uppercase">
+              <span className="rounded-full border border-white/25 px-2.5 py-1 text-white/80">
+                Airbnb
+              </span>
+              AI guest-experience layer · working MVP
+            </p>
+
+            <h1 className="mt-5 text-[clamp(2.9rem,8.2vw,6.4rem)] leading-[0.92] font-semibold tracking-[-0.04em] text-white">
               <span className="hero-line block">YOUR STAY.</span>
               <span className="hero-line hero-line-2 mt-1 block font-display font-normal italic text-[#F4E4CE]">
                 Reimagined.
@@ -105,7 +115,14 @@ export function CinematicHero() {
               direct line to your host — day or night.
             </p>
 
-            <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+            <p className="mt-5 max-w-xl border-l-2 border-brand/70 pl-4 text-[13px] leading-relaxed text-white/65">
+              <strong className="font-semibold text-white/90">What this is:</strong> a
+              working MVP of an AI concierge for Airbnb stays. Every answer comes from
+              the host&rsquo;s verified property record, every problem becomes a real
+              ticket, and the host works from a dashboard instead of a message queue.
+            </p>
+
+            <div className="mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
               <Link
                 href="/api/guest/start"
                 onClick={() => setLeaving(true)}

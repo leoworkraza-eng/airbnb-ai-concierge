@@ -24,9 +24,9 @@ import { media, mediaCredits } from "@/lib/media";
 import { isConciergeConfigured, isSupabaseConfigured, storageMode } from "@/lib/env";
 
 export const metadata = {
-  title: "Your stay, reimagined",
+  title: "Airbnb AI Concierge — your stay, reimagined",
   description:
-    "Casa Barcelona, an Eixample apartment with an AI concierge: verified property answers, a curated city guide and maintenance requests that reach the host.",
+    "A working MVP of an AI guest-experience layer for Airbnb: answers from the host's verified property record, a saved day-by-day plan, and maintenance requests that reach the host as real tickets.",
 };
 
 export default function LandingPage() {
@@ -527,6 +527,15 @@ export default function LandingPage() {
             performance, for example — is a design proposal for now, not a
             connection that exists.
           </p>
+
+          <div className="mt-7 text-center">
+            <Link
+              href="/brief"
+              className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2 text-[12px] font-medium text-ink-soft transition hover:border-ink/25 hover:text-ink"
+            >
+              Read the one-page brief <ArrowUpRight className="size-3.5" />
+            </Link>
+          </div>
         </div>
       </section>
 
