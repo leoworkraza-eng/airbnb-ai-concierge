@@ -3,7 +3,7 @@ import { executeTool, toolDefinitions } from "../claude/tools";
 import type { Repository } from "../data/repo";
 import { env } from "../env";
 import type { GuestSession, MaintenanceRequest, Message, Property, ToolEvent } from "../types";
-import { ConciergeError, type TurnResult } from "./shared";
+import { ConciergeError, RateLimitedError, type TurnResult } from "./shared";
 
 /* ---------------------------------------------------------------------------
    Free-mode agent loop.
@@ -53,6 +53,26 @@ function providerLabel() {
   }
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/* Free tiers meter tokens per minute (Groq's is 8,000), so a single busy minute
+   must not turn into a failed answer. The header is authoritative; providers
+   that omit it usually say "try again in 2.5s" in the message. */
+function retryAfterMs(response: Response, detail: string) {
+  const header = Number(response.headers.get("retry-after"));
+  if (Number.isFinite(header) && header > 0) return Math.min(header * 1000, 10_000);
+
+  const match = detail.match(/try again in\s*([\d.]+)\s*(ms|s)\b/i);
+  if (match) {
+    const value = Number(match[1]);
+    if (Number.isFinite(value)) {
+      return Math.min(match[2].toLowerCase() === "ms" ? value : value * 1000, 10_000);
+    }
+  }
+
+  return 1500;
+}
+
 async function complete(body: Record<string, unknown>): Promise<OpenAiResponse> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 60_000);
@@ -71,10 +91,11 @@ async function complete(body: Record<string, unknown>): Promise<OpenAiResponse> 
     const payload = (await response.json().catch(() => null)) as OpenAiResponse | null;
 
     if (!response.ok) {
-      const detail = payload?.error?.message ?? `HTTP ${response.status}`;
+      const detail = String(payload?.error?.message ?? `HTTP ${response.status}`);
+      if (response.status === 429) throw new RateLimitedError(retryAfterMs(response, detail));
       throw new ConciergeError(
         "upstream",
-        `${providerLabel()} rejected the request (${response.status}): ${String(detail).slice(0, 180)}`,
+        `${providerLabel()} rejected the request (${response.status}): ${detail.slice(0, 180)}`,
       );
     }
 
@@ -101,31 +122,51 @@ export async function runOpenAiConciergeTurn(args: {
 }): Promise<TurnResult> {
   const { repo, property, guest, conversationId } = args;
 
-  const history: Message[] = await repo.listMessages(conversationId, 40);
+  // Free tiers charge every token in the request against a per-minute budget, so
+  // the history sent is bounded; the full transcript still lives in the database.
+  const history: Message[] = await repo.listMessages(conversationId, 12);
   if (!history.length) {
     throw new ConciergeError("empty", "There is no message to answer yet.");
   }
 
-  const messages: OpenAiMessage[] = [
-    { role: "system", content: buildSystemPrompt(property, guest) },
-    ...history.map((message) => ({
-      role: message.role,
-      content: message.content,
-    })),
+  const systemPrompt = buildSystemPrompt(property, guest);
+  const toOpenAi = (message: Message): OpenAiMessage => ({
+    role: message.role,
+    content: message.content,
+  });
+
+  let messages: OpenAiMessage[] = [
+    { role: "system", content: systemPrompt },
+    ...history.map(toOpenAi),
   ];
 
   const toolEvents: ToolEvent[] = [];
   let ticket: MaintenanceRequest | null = null;
   let finalText = "";
+  let retriedAfterLimit = false;
 
   for (let iteration = 0; iteration < 6; iteration += 1) {
-    const payload = await complete({
-      model: env.aiModel,
-      messages,
-      tools: openAiTools,
-      tool_choice: "auto",
-      max_tokens: env.claudeMaxTokens,
-    });
+    let payload: OpenAiResponse;
+
+    try {
+      payload = await complete({
+        model: env.aiModel,
+        messages,
+        tools: openAiTools,
+        tool_choice: "auto",
+        max_tokens: Math.min(env.claudeMaxTokens, 800),
+      });
+    } catch (error) {
+      // One calm retry with a smaller request, then let the caller fall back to
+      // the guided answer rather than showing the guest a provider error.
+      if (error instanceof RateLimitedError && !retriedAfterLimit) {
+        retriedAfterLimit = true;
+        await sleep(Math.min(error.retryAfterMs, 4000));
+        messages = [{ role: "system", content: systemPrompt }, ...history.slice(-2).map(toOpenAi)];
+        continue;
+      }
+      throw error;
+    }
 
     const message = payload.choices?.[0]?.message;
     if (!message) {
@@ -184,6 +225,16 @@ export async function runOpenAiSummary(prompt: string): Promise<string> {
     model: env.aiModel,
     messages: [{ role: "system", content: prompt }],
     max_tokens: 400,
+  }).catch(async (error: unknown) => {
+    if (error instanceof RateLimitedError) {
+      await sleep(Math.min(error.retryAfterMs, 3000));
+      return complete({
+        model: env.aiModel,
+        messages: [{ role: "system", content: prompt }],
+        max_tokens: 400,
+      });
+    }
+    throw error;
   });
 
   const text = (payload.choices?.[0]?.message?.content ?? "").trim();

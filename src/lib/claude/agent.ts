@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { runOpenAiConciergeTurn, runOpenAiSummary } from "../ai/openai-compat";
-import { ConciergeError, type TurnResult } from "../ai/shared";
+import { ConciergeError, isRateLimited, type TurnResult } from "../ai/shared";
 import type { Repository } from "../data/repo";
 import { env, isClaudeConfigured, isOpenAiCompatibleConfigured } from "../env";
 import type { GuestSession, MaintenanceRequest, Message, Property, ToolEvent } from "../types";
@@ -45,12 +45,27 @@ export async function runConciergeTurn(args: {
   guest: GuestSession;
   conversationId: string;
 }): Promise<TurnResult> {
-  if (isClaudeConfigured) return runClaudeTurn(args);
-  if (isOpenAiCompatibleConfigured) return runOpenAiConciergeTurn(args);
+  if (!isClaudeConfigured && !isOpenAiCompatibleConfigured) {
+    // No model configured: answer from the same record with the same tools, so
+    // the product works end-to-end instead of dead-ending at its main screen.
+    return runGuidedTurn(args);
+  }
 
-  // No model configured: answer from the same record with the same tools, so
-  // the product works end-to-end instead of dead-ending at its main screen.
-  return runGuidedTurn(args);
+  try {
+    return isClaudeConfigured ? await runClaudeTurn(args) : await runOpenAiConciergeTurn(args);
+  } catch (error) {
+    if (!isRateLimited(error)) throw error;
+
+    // Free-tier quota is the guest's problem only if we let it be. The guided
+    // concierge reads the same record and writes through the same tools, so the
+    // turn still lands — and the reply says which path answered it.
+    const fallback = await runGuidedTurn(args);
+    return {
+      ...fallback,
+      notice:
+        "The AI model is at its free-tier limit right now, so this answer comes from the property record and city guide instead.",
+    };
+  }
 }
 
 async function runClaudeTurn(args: {

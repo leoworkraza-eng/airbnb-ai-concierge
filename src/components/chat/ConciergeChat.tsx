@@ -23,6 +23,7 @@ type ChatMessage = {
   toolEvents: ToolEvent[];
   pending?: boolean;
   ticket?: TicketSummary;
+  notice?: string;
 };
 
 const suggestions = [
@@ -96,6 +97,7 @@ export function ConciergeChat({
       const data = (await response.json()) as {
         reply?: { id: string; content: string; toolEvents: ToolEvent[]; createdAt: string };
         ticket?: TicketSummary;
+        notice?: string | null;
         error?: string;
         code?: string;
       };
@@ -117,6 +119,7 @@ export function ConciergeChat({
           content: reply.content,
           toolEvents: reply.toolEvents ?? [],
           ticket: data.ticket,
+          notice: data.notice ?? undefined,
         },
       ]);
     } catch (caught) {
@@ -228,6 +231,12 @@ export function ConciergeChat({
                         </span>
                       ))}
                     </div>
+                  ) : null}
+                  {message.notice ? (
+                    <p className="mt-2 inline-flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[10.5px] leading-relaxed text-amber-800">
+                      <AlertTriangle className="mt-px size-3 shrink-0" />
+                      {message.notice}
+                    </p>
                   ) : null}
                   {message.ticket ? (
                     <div className="mt-2.5 rounded-2xl border border-brand/25 bg-brand-soft/60 px-4 py-3">

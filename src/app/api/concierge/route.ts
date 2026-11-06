@@ -73,6 +73,7 @@ export async function POST(request: Request) {
         toolEvents: reply.toolEvents,
         createdAt: reply.createdAt,
       },
+      notice: result.notice ?? null,
       ticket: result.ticket
         ? {
             code: result.ticket.ticketCode,
@@ -83,8 +84,35 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (error instanceof ConciergeError) {
-      const status = error.code === "not_configured" ? 503 : 502;
-      return NextResponse.json({ error: error.message, code: error.code }, { status });
+      // Provider text can name accounts and quotas; it is logged, never shown.
+      console.error("[concierge] model error", error.code, error.message);
+
+      if (error.code === "not_configured") {
+        return NextResponse.json(
+          {
+            error:
+              "No AI model is connected yet. The guided concierge still answers from the property record — try again, or add an API key.",
+            code: error.code,
+          },
+          { status: 503 },
+        );
+      }
+
+      if (error.code === "rate_limited") {
+        return NextResponse.json(
+          {
+            error:
+              "The AI model has hit its free-tier limit for this minute. Ask again shortly — the guided answers still work in the meantime.",
+            code: error.code,
+          },
+          { status: 429, headers: { "Retry-After": "30" } },
+        );
+      }
+
+      return NextResponse.json(
+        { error: "The concierge couldn't finish that answer. Please try again.", code: error.code },
+        { status: 502 },
+      );
     }
 
     console.error("[concierge] model request failed", error);
