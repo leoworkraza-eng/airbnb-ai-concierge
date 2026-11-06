@@ -47,6 +47,12 @@ export default async function HostOverviewPage() {
 
   const today = todayISO(0);
   const inHouse = activeGuests(guests, today);
+  const inHouseNames = [...new Set(inHouse.map((guest) => guest.guestName))];
+  const guestHint = inHouseNames.length
+    ? `${inHouseNames.slice(0, 3).join(", ")}${
+        inHouseNames.length > 3 ? ` +${inHouseNames.length - 3} more` : ""
+      }`
+    : "No one in residence today";
   const openRequests = requests.filter((request) => request.status !== "resolved");
   const attention = [...requests]
     .filter((request) => request.status === "new")
@@ -116,7 +122,7 @@ export default async function HostOverviewPage() {
           <Stat
             label="Current guests"
             value={inHouse.length}
-            hint={inHouse.map((guest) => guest.guestName).join(", ") || "No one in residence today"}
+            hint={guestHint}
             icon={<Users className="size-3.5" />}
           />
           <Stat

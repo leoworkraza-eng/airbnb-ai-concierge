@@ -22,13 +22,22 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/host/login?setup=property", request.url));
   }
 
-  const guest = await repo.createGuestSession({
-    propertyId: property.id,
-    guestName: "Alex",
-    checkInDate: todayISO(0),
-    checkOutDate: todayISO(4),
-    preferences: { interests: [], notes: "", consent: false },
-  });
+  // Starting the demo repeatedly must not grow the host's guest list. Reuse a
+  // stay that is still in residence instead of inserting another "Alex".
+  const sessions = await repo.listGuestSessions([property.id]);
+  const today = todayISO(0);
+  const active = sessions.find(
+    (session) => session.checkInDate <= today && session.checkOutDate >= today,
+  );
+  const guest =
+    active ??
+    (await repo.createGuestSession({
+      propertyId: property.id,
+      guestName: "Alex",
+      checkInDate: todayISO(0),
+      checkOutDate: todayISO(4),
+      preferences: { interests: [], notes: "", consent: false },
+    }));
 
   // Associate the stay with a reservation so the guest sees their booking.
   // Before the reservation migration has run this is a no-op, not a failure.
