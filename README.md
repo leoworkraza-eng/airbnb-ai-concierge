@@ -108,7 +108,9 @@ A matching `profiles` row is created automatically on first sign-in.
    (the `itinerary_items` table). Both are additive: no existing table, column or policy
    is dropped. Until they are applied the app still runs — the reservation and plan
    screens show a migration notice instead of failing, and the rest of the guest
-   experience is unaffected.
+   experience is unaffected. To do it in one paste, use
+   [`supabase/apply-all.sql`](supabase/apply-all.sql), which contains both files in
+   order and is safe to re-run.
 4. Copy the project URL, anon key and service-role key into `.env.local`.
 5. Create a host user in **Authentication → Users** (or use the sign-up flow of your
    choice), then sign in at `/host/login`. The first sign-in creates the profile row, and
@@ -214,7 +216,15 @@ filesystem is read-only).
 ```bash
 npm run typecheck
 npm run build
+npm run smoke     # end-to-end checks against a running instance
 ```
+
+`npm run smoke` drives the guest's real HTTP surface — session, plan build, tick,
+add, remove, validation, cross-guest access and one concierge turn — and asserts
+against the stored rows rather than the rendered page. Point it at another port
+with `SMOKE_BASE_URL=http://localhost:3102 npm run smoke`. On an instance where
+the migrations have not run it reports the plan assertions as skipped, exactly
+like the UI.
 
 End-to-end walkthrough (the eight demo scenes):
 
