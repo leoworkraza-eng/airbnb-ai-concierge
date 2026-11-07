@@ -6,22 +6,18 @@ import {
   Building2,
   CalendarDays,
   LayoutDashboard,
-  Link2,
   LogOut,
   MessageSquare,
-  Settings,
-  Wrench,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/host", label: "Overview", icon: LayoutDashboard, exact: true },
+  { href: "/host/affiliations", label: "Affiliations", icon: UserPlus },
+  { href: "/host/properties", label: "Offering", icon: Building2 },
   { href: "/host/reservations", label: "Reservations", icon: CalendarDays },
-  { href: "/host/properties", label: "Properties", icon: Building2 },
-  { href: "/host/maintenance", label: "Maintenance", icon: Wrench },
-  { href: "/host/guests", label: "Guest interactions", icon: MessageSquare },
-  { href: "/host/integrations", label: "Airbnb connection", icon: Link2 },
-  { href: "/host/settings", label: "AI settings", icon: Settings },
+  { href: "/host/guests", label: "Guest chats", icon: MessageSquare },
 ];
 
 export function HostNav({ unread }: { unread: number }) {
@@ -47,7 +43,7 @@ export function HostNav({ unread }: { unread: number }) {
           >
             <item.icon className="size-4" strokeWidth={1.7} />
             <span className="whitespace-nowrap">{item.label}</span>
-            {item.href === "/host/maintenance" && unread > 0 ? (
+            {item.href === "/host/guests" && unread > 0 ? (
               <span
                 className={cn(
                   "ml-auto grid size-5 place-items-center rounded-full text-[10px] font-semibold",

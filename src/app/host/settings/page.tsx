@@ -50,7 +50,7 @@ export default async function HostSettingsPage() {
             description="The concierge settings belong to a property, so create one to configure it."
             action={
               <Link href="/host/properties/new" className="btn-primary btn-sm">
-                Add property
+                Add offering
               </Link>
             }
           />

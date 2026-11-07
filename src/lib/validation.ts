@@ -5,6 +5,10 @@ export const settingsSchema = z.object({
   extraInstructions: z.string().max(1500).default(""),
   servicePreferences: z.string().max(1500).default(""),
   escalationInstructions: z.string().max(1500).default(""),
+  offeringType: z.enum(["stay", "activity", "service"]).optional(),
+  offeringCategory: z.string().trim().max(80).optional(),
+  priceLabel: z.string().trim().max(40).optional(),
+  duration: z.string().trim().max(80).optional(),
 });
 
 export const propertySchema = z.object({
@@ -54,13 +58,32 @@ export const propertySchema = z.object({
 
 export const statusSchema = z.enum(["new", "in_progress", "resolved"]);
 
-export const signupSchema = z.object({
-  fullName: z.string().trim().max(80).optional().default(""),
+export const hostSignupSchema = z.object({
+  fullName: z.string().trim().min(2, "Enter your name.").max(80),
   email: z.string().trim().email("Enter a valid email address.").max(160),
   password: z
     .string()
     .min(8, "Use at least 8 characters.")
     .max(72, "That password is too long."),
+  offeringName: z.string().trim().min(2, "Name your offering.").max(120),
+  offeringType: z.enum(["stay", "activity", "service"]),
+  offeringCategory: z.string().trim().min(2, "Choose a category.").max(80),
+  city: z.string().trim().min(2, "Add a city.").max(80),
+  neighbourhood: z.string().trim().max(80).default(""),
+  description: z.string().trim().min(20, "Add a short description of your offering.").max(600),
+  address: z.string().trim().max(220).default(""),
+  priceLabel: z.string().trim().max(40).default(""),
+  duration: z.string().trim().max(80).default(""),
+});
+
+export const affiliationRequestSchema = z.object({
+  hostId: z.string().trim().min(1, "Choose a host.").max(120),
+  propertyId: z.string().trim().min(1, "Choose an offering.").max(120),
+  reservationId: z.string().trim().max(120).optional().nullable(),
+});
+
+export const affiliationStatusSchema = z.object({
+  status: z.enum(["accepted", "declined"]),
 });
 
 export const reservationStatusSchema = z.enum([
@@ -129,11 +152,7 @@ export const guestLoginSchema = z.object({
 
 export const guestAccountSignupSchema = z.object({
   fullName: z.string().trim().min(2, "Enter your full name.").max(80),
-  email: z
-    .string()
-    .trim()
-    .email("Enter the email address from your booking.")
-    .max(160),
+  email: z.string().trim().email("Enter a valid email address.").max(160),
   password: z
     .string()
     .min(8, "Use at least 8 characters.")

@@ -38,15 +38,15 @@ export default async function HostLoginPage({
             The questions, handled. The decisions, yours.
           </h1>
           <p className="mt-4 text-[14px] leading-relaxed text-white/55">
-            Edit the property record the concierge answers from, watch maintenance
-            requests arrive, and read a short brief on every guest conversation.
+            Describe what you offer, review guests who ask to connect, and see the
+            reservations and messages that belong to you.
           </p>
 
           <div className="mt-8 space-y-3">
             {[
-              "One verified source of truth for every property fact",
-              "Ticket IDs, priorities and statuses you control",
-              "AI summaries instead of reading transcripts",
+              "A public host profile built from your own offering",
+              "Clear accept or decline for every guest request",
+              "Guest chats and reservations in one workspace",
             ].map((item) => (
               <div key={item} className="flex items-start gap-2.5 text-[12.5px] text-white/70">
                 <span className="mt-0.5 grid size-4 place-items-center rounded-full bg-white/10">
@@ -98,7 +98,7 @@ export default async function HostLoginPage({
                 >
                   Create a host account
                 </Link>{" "}
-                — confirmed immediately, with the starter property included.
+                — you will add your first offering as part of signup.
               </p>
             </div>
           ) : null}
@@ -109,9 +109,8 @@ export default async function HostLoginPage({
               className="mt-5"
               icon={<Building2 className="size-4" />}
             >
-              <span className="font-medium">No property is set up yet.</span> Sign in
-              to create the first property — the guest experience needs a verified
-              record before it can start a stay.
+              <span className="font-medium">No offering is set up yet.</span> Sign in
+              as the demo host to add the first offering.
             </Note>
           ) : null}
 

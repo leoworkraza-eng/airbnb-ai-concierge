@@ -21,16 +21,15 @@ export default async function NewPropertyPage() {
           href="/host/properties"
           className="inline-flex items-center gap-1.5 text-[12px] text-muted transition hover:text-ink"
         >
-          <ArrowLeft className="size-3.5" /> Back to properties
+          <ArrowLeft className="size-3.5" /> Back to offerings
         </Link>
         <div>
-          <p className="eyebrow">New property</p>
+          <p className="eyebrow">New offering</p>
           <h1 className="mt-1.5 text-[28px] leading-tight font-semibold">
-            Add an accommodation
+            Add an offering
           </h1>
           <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-muted">
-            Start with the essentials — you can complete the appliance guides and
-            FAQs later. The concierge will only use what you save here.
+            Choose a stay, activity or service, then add the details guests should see.
           </p>
         </div>
 

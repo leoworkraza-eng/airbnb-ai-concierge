@@ -7,8 +7,11 @@ import {
   House,
   KeyRound,
   LifeBuoy,
+  MapPin,
   UserRound,
+  UsersRound,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Logo } from "@/components/brand";
 import { cn } from "@/lib/utils";
 
@@ -23,29 +26,61 @@ export function Disclaimer({ className }: { className?: string }) {
   );
 }
 
-const tabs = [
-  { id: "welcome", label: "Welcome", href: "/welcome", icon: House },
+export type GuestTab =
+  | "welcome"
+  | "stay"
+  | "hosts"
+  | "connections"
+  | "profile"
+  | "itinerary"
+  | "concierge"
+  | "explore"
+  | "support";
+
+type NavItem = { id: GuestTab; label: string; href: string; icon: LucideIcon };
+
+const noStayTabs: NavItem[] = [
   { id: "stay", label: "My stay", href: "/stay", icon: KeyRound },
+  { id: "hosts", label: "Hosts", href: "/hosts", icon: MapPin },
+  { id: "connections", label: "Connections", href: "/connections", icon: UsersRound },
+  { id: "profile", label: "Profile", href: "/profile", icon: UserRound },
+];
+
+const stayTabs: NavItem[] = [
+  { id: "welcome", label: "Overview", href: "/welcome", icon: House },
+  ...noStayTabs,
+];
+
+const stayTools: NavItem[] = [
   { id: "itinerary", label: "Plan", href: "/itinerary", icon: CalendarRange },
   { id: "concierge", label: "Concierge", href: "/concierge", icon: ConciergeBell },
   { id: "explore", label: "Explore", href: "/explore", icon: Compass },
   { id: "support", label: "Support", href: "/support", icon: LifeBuoy },
-  { id: "profile", label: "Profile", href: "/profile", icon: UserRound },
-] as const;
+];
 
-export type GuestTab = (typeof tabs)[number]["id"];
+function linkClass(current: boolean) {
+  return cn(
+    "group relative inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all duration-300",
+    current
+      ? "bg-ink text-cream shadow-[0_10px_24px_-16px_rgba(25,19,16,0.9)]"
+      : "text-ink-soft hover:bg-sand/80",
+  );
+}
 
 export function GuestShell({
   propertyName,
   active,
   guestName,
+  hasStay = true,
   children,
 }: {
   propertyName: string;
   active: GuestTab;
   guestName: string;
+  hasStay?: boolean;
   children: ReactNode;
 }) {
+  const tabs = hasStay ? stayTabs : noStayTabs;
   return (
     <div className="flex min-h-screen flex-col bg-cream">
       <header className="sticky top-0 z-30 border-b border-line/70 bg-cream/85 backdrop-blur-xl">
@@ -55,16 +90,18 @@ export function GuestShell({
             <span className="hidden h-8 w-px bg-line sm:block" />
             <div className="hidden min-w-0 sm:block">
               <p className="truncate text-[13px] font-medium text-ink">{propertyName}</p>
-              <p className="text-[11px] text-muted">Guest stay · {guestName}</p>
+              <p className="text-[11px] text-muted">
+                {hasStay ? "Guest stay" : "Guest account"} · {guestName}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link
+            <a
               href="/api/guest/reset"
-              className="hidden text-[12px] text-muted transition hover:text-ink sm:inline"
+              className="text-[12px] text-muted transition hover:text-ink"
             >
               Sign out
-            </Link>
+            </a>
             <Link href="/host/login" className="btn-secondary btn-sm">
               Host sign in
             </Link>
@@ -79,12 +116,7 @@ export function GuestShell({
                   key={tab.id}
                   href={tab.href}
                   aria-current={current ? "page" : undefined}
-                  className={cn(
-                    "group relative inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all duration-300",
-                    current
-                      ? "bg-ink text-cream shadow-[0_10px_24px_-16px_rgba(25,19,16,0.9)]"
-                      : "text-ink-soft hover:bg-sand/80",
-                  )}
+                  className={linkClass(current)}
                 >
                   <tab.icon
                     className={cn(
@@ -98,6 +130,34 @@ export function GuestShell({
               );
             })}
           </div>
+          {hasStay ? (
+            <div className="border-t border-line/50 bg-white/35">
+              <div className="container-page no-scrollbar flex items-center gap-1 overflow-x-auto py-1.5">
+                <span className="mr-1 shrink-0 text-[10px] tracking-[0.14em] text-muted uppercase">
+                  Stay tools
+                </span>
+                {stayTools.map((tab) => {
+                  const current = active === tab.id;
+                  return (
+                    <Link
+                      key={tab.id}
+                      href={tab.href}
+                      aria-current={current ? "page" : undefined}
+                      className={cn(
+                        "inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] transition",
+                        current
+                          ? "bg-sand text-ink"
+                          : "text-muted hover:bg-sand/70 hover:text-ink",
+                      )}
+                    >
+                      <tab.icon className="size-3" />
+                      {tab.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
         </nav>
       </header>
 

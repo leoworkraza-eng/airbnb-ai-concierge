@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { GuestShell } from "@/components/guest/GuestShell";
 import { ItineraryBoard } from "@/components/guest/ItineraryBoard";
 import { getGuestContext } from "@/lib/guest-context";
+import { getGuestAccount } from "@/lib/guest-account";
 import { getGuestRepo } from "@/lib/data";
 import { MigrationRequiredError } from "@/lib/data/repo";
 import { barcelonaPlaces } from "@/lib/demo-data";
@@ -14,7 +15,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ItineraryPage() {
   const context = await getGuestContext();
-  if (!context) redirect("/guest/login");
+  if (!context) {
+    const account = await getGuestAccount();
+    redirect(account ? "/stay" : "/guest/login?next=/itinerary");
+  }
 
   const { guest, property } = context;
   const repo = await getGuestRepo();

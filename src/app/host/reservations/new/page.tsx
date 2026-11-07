@@ -43,7 +43,7 @@ export default async function NewReservationPage() {
             description="Reservations belong to a property, so create one before adding a booking."
             action={
               <Link href="/host/properties/new" className="btn-primary btn-sm">
-                Add property
+                Add offering
               </Link>
             }
           />

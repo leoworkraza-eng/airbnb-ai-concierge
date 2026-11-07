@@ -5,7 +5,7 @@ import { Card, EmptyState, Pill } from "@/components/ui";
 import { getHostWorkspace, propertyName } from "@/lib/host-context";
 import { formatDateTime } from "@/lib/utils";
 
-export const metadata = { title: "Properties" };
+export const metadata = { title: "Offerings" };
 export const dynamic = "force-dynamic";
 
 export default async function HostPropertiesPage() {
@@ -21,28 +21,28 @@ export default async function HostPropertiesPage() {
       <div className="space-y-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="eyebrow">Property management</p>
+            <p className="eyebrow">Offerings</p>
             <h1 className="mt-1.5 text-[28px] leading-tight font-semibold">
-              Your properties
+              What you offer
             </h1>
             <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-muted">
-              Everything here is what the concierge knows. Edit a property and the
-              next guest answer uses it immediately.
+              These profiles appear in the public host directory. Edit one and guests
+              see the update immediately.
             </p>
           </div>
           <Link href="/host/properties/new" className="btn-primary btn-sm">
-            <Plus className="size-3.5" /> Add property
+            <Plus className="size-3.5" /> Add offering
           </Link>
         </div>
 
         {properties.length === 0 ? (
           <EmptyState
             icon={<Building2 className="size-4" />}
-            title="No properties yet"
-            description="Add your first property to give the concierge a verified record to answer from."
+            title="No offerings yet"
+            description="Add a place, activity or service. It becomes your public host profile."
             action={
               <Link href="/host/properties/new" className="btn-primary btn-sm">
-                <Plus className="size-3.5" /> Add property
+                <Plus className="size-3.5" /> Add offering
               </Link>
             }
           />
@@ -113,11 +113,10 @@ export default async function HostPropertiesPage() {
         )}
 
         <Card className="p-5">
-          <h2 className="text-[14px] font-semibold">Adding another property</h2>
+          <h2 className="text-[14px] font-semibold">Adding another offering</h2>
           <p className="mt-1.5 max-w-2xl text-[12.5px] leading-relaxed text-muted">
-            Each property keeps its own record, guest sessions, conversations and
-            maintenance tickets. Guest links and property scoping are already built
-            into the data model, so a second property works without code changes.
+            A host can offer more than one thing. Each offering appears on your public
+            profile and keeps its own reservations and guest conversations.
           </p>
         </Card>
       </div>

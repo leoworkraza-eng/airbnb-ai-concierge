@@ -18,8 +18,12 @@ import {
   Wrench,
 } from "lucide-react";
 import { GuestShell } from "@/components/guest/GuestShell";
+import { AffiliationButton } from "@/components/guest/AffiliationButton";
 import { CopyButton } from "@/components/CopyButton";
 import { Card, Note, Pill } from "@/components/ui";
+import { listAffiliationsForGuest } from "@/lib/affiliations";
+import { getGuestRepo } from "@/lib/data";
+import { getGuestAccount } from "@/lib/guest-account";
 import { getGuestContext, greeting } from "@/lib/guest-context";
 import { formatDate, nightsBetween } from "@/lib/utils";
 
@@ -27,11 +31,61 @@ export const metadata = { title: "My stay" };
 export const dynamic = "force-dynamic";
 
 export default async function StayPage() {
-  const context = await getGuestContext();
-  if (!context) redirect("/guest/login");
+  const [context, account] = await Promise.all([
+    getGuestContext(),
+    getGuestAccount(),
+  ]);
+
+  if (!context) {
+    if (!account) redirect("/guest/login?next=/stay");
+
+    return (
+      <GuestShell
+        propertyName="No stay linked"
+        active="stay"
+        guestName={account.fullName}
+        hasStay={false}
+      >
+        <div className="mx-auto max-w-2xl space-y-4">
+          <Card className="p-6 sm:p-8">
+            <p className="eyebrow">My stay</p>
+            <h1 className="mt-2 text-[30px] leading-tight font-semibold">
+              No stay linked to this account
+            </h1>
+            <p className="mt-3 text-[13px] leading-relaxed text-muted">
+              You are signed in as {account.fullName}. You can still browse hosts and
+              ask one to connect. A stay appears here when your account email matches a
+              booking.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link href="/hosts" className="btn-primary">
+                Browse hosts <ArrowRight className="size-4" />
+              </Link>
+              <Link href="/connections" className="btn-secondary">
+                My connections
+              </Link>
+            </div>
+            <p className="mt-4 border-t border-line pt-4 text-[11.5px] leading-relaxed text-muted">
+              Booked with a different email? Create a guest account with the booking
+              email to link the stay automatically.
+            </p>
+          </Card>
+        </div>
+      </GuestShell>
+    );
+  }
 
   const { property, guest } = context;
   const nights = nightsBetween(guest.checkInDate, guest.checkOutDate);
+  const repo = await getGuestRepo();
+  const reservation = account
+    ? await repo.getReservationForGuest(guest.id).catch(() => null)
+    : null;
+  const affiliation = account
+    ? (await listAffiliationsForGuest(account.id)).find(
+        (item) => item.hostId === property.hostId,
+      ) ?? null
+    : null;
 
   return (
     <GuestShell
@@ -40,6 +94,32 @@ export default async function StayPage() {
       guestName={guest.guestName}
     >
       <div className="space-y-6">
+        {account && reservation ? (
+          <Card className="flex flex-col gap-4 border-brand/15 bg-brand-soft/30 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10.5px] font-semibold tracking-[0.14em] text-brand-dark uppercase">
+                Official reservation · {reservation.code}
+              </p>
+              <p className="mt-1 text-[13px] font-medium">
+                Connect with {property.hostName}, your host
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed text-muted">
+                Your reservation belongs to this offering. Ask to connect so the host
+                can see you and accept.
+              </p>
+            </div>
+            <AffiliationButton
+              hostId={property.hostId}
+              propertyId={property.id}
+              reservationId={reservation.id}
+              hostName={property.hostName}
+              signedIn
+              initialStatus={affiliation?.status ?? null}
+              nextPath="/stay"
+            />
+          </Card>
+        ) : null}
+
         {/* Header */}
         <Card className="overflow-hidden p-0">
           <div className="relative grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.35fr_1fr]">

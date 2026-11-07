@@ -23,6 +23,7 @@ import { ConciergeAvatar } from "@/components/brand";
 import { Note, Pill } from "@/components/ui";
 import { Reveal } from "@/components/motion";
 import { getGuestContext, greeting } from "@/lib/guest-context";
+import { getGuestAccount } from "@/lib/guest-account";
 import { getGuestRepo } from "@/lib/data";
 import { media } from "@/lib/media";
 import { formatDate, nightsBetween, statusLabels } from "@/lib/utils";
@@ -33,7 +34,11 @@ export const dynamic = "force-dynamic";
 
 export default async function WelcomePage() {
   const context = await getGuestContext();
-  if (!context) redirect("/guest/login");
+  if (!context) {
+    const account = await getGuestAccount();
+    if (account) redirect("/hosts");
+    redirect("/guest/login?next=/welcome");
+  }
 
   const { property, guest } = context;
   const nights = nightsBetween(guest.checkInDate, guest.checkOutDate);

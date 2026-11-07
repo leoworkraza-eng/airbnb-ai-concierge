@@ -103,8 +103,8 @@ export default async function HostGuestsPage() {
             title="No guest conversations yet"
             description="Once a guest asks the concierge something, the conversation and its summary will appear here."
             action={
-              <Link href="/stay" className="btn-secondary btn-sm">
-                Open the guest experience
+              <Link href="/host/properties" className="btn-secondary btn-sm">
+                Review your offering
               </Link>
             }
           />

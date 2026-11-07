@@ -14,6 +14,7 @@ import { GuestShell } from "@/components/guest/GuestShell";
 import { ConciergeChat } from "@/components/chat/ConciergeChat";
 import { Card, Note, Pill } from "@/components/ui";
 import { getGuestContext } from "@/lib/guest-context";
+import { getGuestAccount } from "@/lib/guest-account";
 import { getGuestRepo } from "@/lib/data";
 import { isConciergeConfigured } from "@/lib/env";
 import { statusLabels } from "@/lib/utils";
@@ -27,7 +28,10 @@ export default async function ConciergePage({
   searchParams: Promise<{ prompt?: string }>;
 }) {
   const context = await getGuestContext();
-  if (!context) redirect("/guest/login");
+  if (!context) {
+    const account = await getGuestAccount();
+    redirect(account ? "/stay" : "/guest/login?next=/concierge");
+  }
 
   const { property, guest } = context;
   const { prompt } = await searchParams;

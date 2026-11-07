@@ -3,7 +3,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { env, isSupabaseConfigured } from "./env";
 import { getGuestRepo, getHostRepo } from "./data";
-import { DEMO_HOST, demoPropertyInput } from "./demo-data";
+import { DEMO_HOST } from "./demo-data";
+import { buildOfferingInput, type OfferingInput } from "./offerings";
 import type { HostSession } from "./types";
 import { createSupabaseServerClient } from "./supabase/server";
 import { createSupabaseAdminClient } from "./data/supabase";
@@ -133,6 +134,16 @@ export async function signInHost(
       };
     }
 
+    if (data.user.app_metadata?.role === "guest") {
+      // Clear only this attempt. A guest should not lose their existing guest
+      // session just because they used the host form by mistake.
+      await supabase.auth.signOut({ scope: "local" });
+      return {
+        ok: false,
+        error: "That is a guest account. Use guest sign-in instead.",
+      };
+    }
+
     const repo = await getGuestRepo();
     const profile = await repo.ensureProfile({
       id: data.user.id,
@@ -196,6 +207,7 @@ export async function signUpHost(input: {
   email: string;
   password: string;
   fullName?: string;
+  offering: OfferingInput;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!isSupabaseConfigured) {
     return {
@@ -214,6 +226,7 @@ export async function signUpHost(input: {
     password: input.password,
     email_confirm: true,
     user_metadata: { full_name: fullName },
+    app_metadata: { role: "host" },
   });
 
   if (created.error) {
@@ -221,7 +234,7 @@ export async function signUpHost(input: {
     return {
       ok: false,
       error: exists
-        ? "An account with that email already exists. Sign in instead."
+        ? "An account with that email already exists. Sign in with the guest or host form you used."
         : "The account could not be created. Please try again.",
     };
   }
@@ -242,12 +255,17 @@ export async function signUpHost(input: {
   const repo = await getGuestRepo();
   const profile = await repo.ensureProfile({ id: data.user.id, email, fullName });
 
-  // A new account must land on a workspace that can answer guests. Seeding
-  // here uses the service-role client, so a first page render cannot race the
-  // row-level policy that scopes properties to the signed-in host.
-  const existing = await repo.listProperties(profile.id);
-  if (!existing.length) {
-    await repo.createProperty(profile.id, demoPropertyInput(profile.id));
+  // The host describes their first offering during onboarding. We never seed a
+  // property the host did not create: a real host should see their own place.
+  try {
+    await repo.createProperty(profile.id, buildOfferingInput(input.offering));
+  } catch (error) {
+    console.error("[host] Could not create the first offering", error);
+    return {
+      ok: false,
+      error:
+        "Your account was created, but the first offering could not be saved. Sign in and add it from your dashboard.",
+    };
   }
 
   return { ok: true };

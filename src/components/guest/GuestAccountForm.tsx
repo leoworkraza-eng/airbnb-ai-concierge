@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, LockKeyhole, Mail } from "lucide-react";
 
-export function GuestAccountForm() {
+export function GuestAccountForm({ next }: { next?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +26,11 @@ export function GuestAccountForm() {
         throw new Error(data.error ?? "That email and password didn't work.");
       }
 
-      router.replace(data.redirect ?? "/welcome");
+      const destination =
+        next && next.startsWith("/") && !next.startsWith("//")
+          ? next
+          : (data.redirect ?? "/hosts");
+      router.replace(destination);
       router.refresh();
     } catch (caught) {
       setError(

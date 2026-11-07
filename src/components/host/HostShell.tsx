@@ -47,10 +47,10 @@ export function HostShell({
           </div>
           <div className="mt-4 hidden px-1 lg:block">
             <Link
-              href="/stay"
+              href="/"
               className="text-[12px] text-muted transition hover:text-ink"
             >
-              View guest experience →
+              View public site →
             </Link>
           </div>
         </aside>

@@ -3,8 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, Loader2, Save } from "lucide-react";
-import type { Property, PropertyInput } from "@/lib/types";
+import type { OfferingType, Property, PropertyInput } from "@/lib/types";
 import { Card, Field, Note } from "@/components/ui";
+import {
+  OFFERING_TYPES,
+  offeringCategories,
+  offeringTypeLabels,
+  offeringTypeNotes,
+} from "@/lib/offerings";
 
 /* ---------------------------------------------------------------------------
    Property editor.
@@ -14,6 +20,10 @@ import { Card, Field, Note } from "@/components/ui";
    --------------------------------------------------------------------------- */
 
 type FormState = {
+  offeringType: OfferingType;
+  offeringCategory: string;
+  priceLabel: string;
+  duration: string;
   name: string;
   address: string;
   neighbourhood: string;
@@ -36,6 +46,10 @@ type FormState = {
 };
 
 const blank: FormState = {
+  offeringType: "stay",
+  offeringCategory: "Apartment",
+  priceLabel: "",
+  duration: "",
   name: "",
   address: "",
   neighbourhood: "",
@@ -60,6 +74,12 @@ const blank: FormState = {
 function toForm(property?: Property): FormState {
   if (!property) return blank;
   return {
+    offeringType: property.settings.offeringType ?? "stay",
+    offeringCategory:
+      property.settings.offeringCategory ??
+      (property.settings.offeringType === "activity" ? "Food & drink" : "Apartment"),
+    priceLabel: property.settings.priceLabel ?? "",
+    duration: property.settings.duration ?? "",
     name: property.name,
     address: property.address,
     neighbourhood: property.neighbourhood,
@@ -108,6 +128,16 @@ export function PropertyForm({ property }: { property?: Property }) {
   const set = (key: keyof FormState) => (value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
 
+  const isStay = form.offeringType === "stay";
+
+  function changeType(type: OfferingType) {
+    setForm((current) => ({
+      ...current,
+      offeringType: type,
+      offeringCategory: offeringCategories[type][0],
+    }));
+  }
+
   const payload: PropertyInput = {
     name: form.name,
     address: form.address,
@@ -134,13 +164,18 @@ export function PropertyForm({ property }: { property?: Property }) {
       question: pair.first,
       answer: pair.second,
     })),
-    settings:
-      property?.settings ?? {
+    settings: {
+      ...(property?.settings ?? {
         tone: "warm",
         extraInstructions: "",
         servicePreferences: "",
         escalationInstructions: "",
-      },
+      }),
+      offeringType: form.offeringType,
+      offeringCategory: form.offeringCategory,
+      priceLabel: form.priceLabel,
+      duration: form.duration,
+    },
   };
 
   async function submit(event: React.FormEvent) {
@@ -177,14 +212,45 @@ export function PropertyForm({ property }: { property?: Property }) {
   return (
     <form onSubmit={submit} className="space-y-5 pb-24">
       <Note tone="neutral" className="bg-white">
-        These fields are the concierge&rsquo;s only source of property facts. Any
-        field left empty is answered as &ldquo;not on record&rdquo; — never guessed.
+        This is what guests see on your public host profile. Only saved details are
+        used; anything missing is never guessed.
       </Note>
 
       <Card className="p-5 sm:p-6">
-        <h2 className="text-[15px] font-semibold">The property</h2>
+        <h2 className="text-[15px] font-semibold">The offering</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Field label="Property name" htmlFor="name" className="sm:col-span-2">
+          <Field label="Offering type" htmlFor="offeringType">
+            <select
+              id="offeringType"
+              value={form.offeringType}
+              onChange={(event) => changeType(event.target.value as OfferingType)}
+              className="field-input"
+            >
+              {OFFERING_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {offeringTypeLabels[type]}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-[11px] text-muted">
+              {offeringTypeNotes[form.offeringType]}
+            </p>
+          </Field>
+          <Field label="Category" htmlFor="offeringCategory">
+            <select
+              id="offeringCategory"
+              value={form.offeringCategory}
+              onChange={(event) => set("offeringCategory")(event.target.value)}
+              className="field-input"
+            >
+              {offeringCategories[form.offeringType].map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Offering name" htmlFor="name" className="sm:col-span-2">
             <input
               id="name"
               required
@@ -194,10 +260,10 @@ export function PropertyForm({ property }: { property?: Property }) {
               placeholder="Casa Barcelona"
             />
           </Field>
-          <Field label="Address" htmlFor="address" className="sm:col-span-2">
+          <Field label="Address or meeting point" htmlFor="address" className="sm:col-span-2">
             <input
               id="address"
-              required
+              required={isStay}
               value={form.address}
               onChange={(event) => set("address")(event.target.value)}
               className="field-input"
@@ -227,7 +293,7 @@ export function PropertyForm({ property }: { property?: Property }) {
             label="Description"
             htmlFor="description"
             className="sm:col-span-2"
-            hint="Two or three sentences the concierge can use when welcoming a guest."
+            hint="Two or three sentences guests read before asking to connect."
           >
             <textarea
               id="description"
@@ -237,29 +303,55 @@ export function PropertyForm({ property }: { property?: Property }) {
               className="field-input resize-y"
             />
           </Field>
-          <Field label="Check-in from" htmlFor="checkIn">
+          <Field label="Price guide (optional)" htmlFor="priceLabel">
             <input
-              id="checkIn"
-              type="time"
-              required
-              value={form.checkIn}
-              onChange={(event) => set("checkIn")(event.target.value)}
+              id="priceLabel"
+              maxLength={40}
+              value={form.priceLabel}
+              onChange={(event) => set("priceLabel")(event.target.value)}
               className="field-input"
+              placeholder="From €120 / night"
             />
           </Field>
-          <Field label="Check-out by" htmlFor="checkOut">
+          <Field label="Duration or availability (optional)" htmlFor="duration">
             <input
-              id="checkOut"
-              type="time"
-              required
-              value={form.checkOut}
-              onChange={(event) => set("checkOut")(event.target.value)}
+              id="duration"
+              maxLength={80}
+              value={form.duration}
+              onChange={(event) => set("duration")(event.target.value)}
               className="field-input"
+              placeholder="Nightly · 2-hour tour · Weekdays"
             />
           </Field>
+          {isStay ? (
+            <>
+              <Field label="Check-in from" htmlFor="checkIn">
+                <input
+                  id="checkIn"
+                  type="time"
+                  required
+                  value={form.checkIn}
+                  onChange={(event) => set("checkIn")(event.target.value)}
+                  className="field-input"
+                />
+              </Field>
+              <Field label="Check-out by" htmlFor="checkOut">
+                <input
+                  id="checkOut"
+                  type="time"
+                  required
+                  value={form.checkOut}
+                  onChange={(event) => set("checkOut")(event.target.value)}
+                  className="field-input"
+                />
+              </Field>
+            </>
+          ) : null}
         </div>
       </Card>
 
+      {isStay ? (
+        <>
       <Card className="p-5 sm:p-6">
         <h2 className="text-[15px] font-semibold">Access &amp; Wi-Fi</h2>
         <div className="mt-4 grid gap-4">
@@ -382,6 +474,8 @@ export function PropertyForm({ property }: { property?: Property }) {
           </Field>
         </div>
       </Card>
+        </>
+      ) : null}
 
       <Card className="p-5 sm:p-6">
         <h2 className="text-[15px] font-semibold">Host contact</h2>
@@ -441,7 +535,7 @@ export function PropertyForm({ property }: { property?: Property }) {
           </p>
           <button type="submit" disabled={saving} className="btn-primary">
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-            {saving ? "Saving…" : property ? "Save property" : "Create property"}
+            {saving ? "Saving…" : property ? "Save offering" : "Add offering"}
           </button>
         </div>
       </div>

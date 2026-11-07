@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, UserPlus } from "lucide-react";
 
-export function GuestSignupForm({ initialEmail = "" }: { initialEmail?: string }) {
+export function GuestSignupForm({
+  initialEmail = "",
+  next,
+}: {
+  initialEmail?: string;
+  next?: string;
+}) {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState(initialEmail);
@@ -27,7 +33,11 @@ export function GuestSignupForm({ initialEmail = "" }: { initialEmail?: string }
         throw new Error(data.error ?? "The guest account could not be created.");
       }
 
-      router.replace(data.redirect ?? "/welcome");
+      const destination =
+        next && next.startsWith("/") && !next.startsWith("//")
+          ? next
+          : (data.redirect ?? "/welcome");
+      router.replace(destination);
       router.refresh();
     } catch (caught) {
       setError(
@@ -75,7 +85,8 @@ export function GuestSignupForm({ initialEmail = "" }: { initialEmail?: string }
           placeholder="you@example.com"
         />
         <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
-          Use the email on your booking — the account is linked to that stay.
+          Any valid email works. If it matches a booking, we link the stay. You can
+          also join with no booking and browse hosts.
         </p>
       </div>
 
@@ -96,7 +107,7 @@ export function GuestSignupForm({ initialEmail = "" }: { initialEmail?: string }
           placeholder="At least 8 characters"
         />
         <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
-          Held by Supabase Auth, never stored by this app.
+          Use at least 8 characters.
         </p>
       </div>
 

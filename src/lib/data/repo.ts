@@ -111,6 +111,8 @@ export interface Repository {
   getProperty(id: string): Promise<Property | null>;
   getPrimaryProperty(): Promise<Property | null>;
   listProperties(hostId: string): Promise<Property[]>;
+  /** Every public offering, used by the host directory. Server-side only. */
+  listAllProperties(): Promise<Property[]>;
   createProperty(hostId: string, input: PropertyInput): Promise<Property>;
   updateProperty(
     id: string,
@@ -121,6 +123,8 @@ export interface Repository {
   createGuestSession(input: CreateGuestSessionInput): Promise<GuestSession>;
   getGuestSession(id: string): Promise<GuestSession | null>;
   listGuestSessions(propertyIds: string[]): Promise<GuestSession[]>;
+  /** All stay/affiliation records, used only to resolve a guest's own links. */
+  listAllGuestSessions(): Promise<GuestSession[]>;
   updateGuestPreferences(
     id: string,
     preferences: GuestPreferences,

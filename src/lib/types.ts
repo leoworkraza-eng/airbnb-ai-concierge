@@ -9,12 +9,17 @@ export type Faq = { question: string; answer: string };
 export type ApplianceInstruction = { appliance: string; instructions: string };
 
 export type ConciergeTone = "warm" | "professional" | "luxury";
+export type OfferingType = "stay" | "activity" | "service";
 
 export type PropertySettings = {
   tone: ConciergeTone;
   extraInstructions: string;
   servicePreferences: string;
   escalationInstructions: string;
+  offeringType?: OfferingType;
+  offeringCategory?: string;
+  priceLabel?: string;
+  duration?: string;
 };
 
 export type Property = {
@@ -49,11 +54,32 @@ export type PropertyInput = Omit<
   "id" | "hostId" | "createdAt" | "updatedAt"
 >;
 
+export type AffiliationStatus = "pending" | "accepted" | "declined";
+
+export type Affiliation = {
+  id: string;
+  guestUserId: string;
+  guestName: string;
+  guestEmail: string;
+  hostId: string;
+  hostName: string;
+  propertyId: string;
+  propertyName: string;
+  status: AffiliationStatus;
+  initiatedBy: "guest" | "host";
+  reservationId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type GuestPreferences = {
   interests: string[];
   notes: string;
   consent: boolean;
   updatedAt?: string;
+  /* Affiliations use the existing guest_sessions record so this feature works
+     on the current database without a migration. */
+  affiliation?: Affiliation;
 };
 
 export type GuestSession = {
@@ -129,6 +155,12 @@ export type HostSession = {
   email: string;
   fullName: string;
   mode: "supabase" | "local";
+};
+
+export type GuestAccount = {
+  id: string;
+  email: string;
+  fullName: string;
 };
 
 /* ------------------------------------------------------------- RESERVATIONS */
@@ -210,6 +242,8 @@ export type Place = {
   tags: string[];
   distanceKm: number;
   bestTime: "morning" | "afternoon" | "evening" | "any";
+  /** A plain-language subtype, e.g. Club, Bar, Lounge for nightlife. */
+  subtype?: string;
 };
 
 /* ------------------------------------------------------------------ ITINERARY */

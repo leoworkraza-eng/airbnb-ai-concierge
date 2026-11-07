@@ -28,3 +28,6 @@ yarn-debug.log*
 yarn-error.log*
 .vercel
 *.tsbuildinfo
+
+# local QA artifacts
+.qa/

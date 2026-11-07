@@ -104,8 +104,8 @@ export default async function HostOverviewPage() {
               Good to see you, {session.fullName.split(" ")[0]}.
             </h1>
             <p className="mt-1.5 text-[13px] text-muted">
-              {formatDateTime(new Date())} · {properties.length} propert
-              {properties.length === 1 ? "y" : "ies"} · {inHouse.length} guest
+              {formatDateTime(new Date())} · {properties.length} offering
+              {properties.length === 1 ? "" : "s"} · {inHouse.length} guest
               {inHouse.length === 1 ? "" : "s"} in residence
             </p>
           </div>
@@ -114,9 +114,9 @@ export default async function HostOverviewPage() {
 
         <div className="stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Stat
-            label="Properties"
+            label="Offerings"
             value={properties.length}
-            hint={properties[0]?.name ?? "Add your first property"}
+            hint={properties[0]?.name ?? "Add your first offering"}
             icon={<Building2 className="size-3.5" />}
           />
           <Stat
@@ -348,7 +348,7 @@ export default async function HostOverviewPage() {
           {/* Property snapshot */}
           <Card className="p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-[15px] font-semibold">Property</h2>
+              <h2 className="text-[15px] font-semibold">Your offerings</h2>
               <Link
                 href="/host/properties"
                 className="text-[11.5px] text-muted transition hover:text-ink"
@@ -359,8 +359,8 @@ export default async function HostOverviewPage() {
 
             {properties.length === 0 ? (
               <EmptyState
-                title="No property yet"
-                description="Add a property so the concierge has something to answer from."
+                title="No offering yet"
+                description="Add what you offer so guests can find you and the concierge has something to answer from."
                 action={<NewPropertyButton />}
               />
             ) : (
@@ -383,7 +383,7 @@ export default async function HostOverviewPage() {
                       href={`/host/properties/${property.id}`}
                       className="mt-3 inline-flex items-center gap-1 text-[11.5px] font-medium text-brand hover:text-brand-dark"
                     >
-                      Edit property <ArrowRight className="size-3" />
+                      Edit offering <ArrowRight className="size-3" />
                     </Link>
                   </div>
                 ))}
@@ -415,7 +415,7 @@ export default async function HostOverviewPage() {
 function NewPropertyButton() {
   return (
     <Link href="/host/properties/new" className="btn-primary btn-sm">
-      <Plus className="size-3.5" /> Add property
+      <Plus className="size-3.5" /> Add offering
     </Link>
   );
 }

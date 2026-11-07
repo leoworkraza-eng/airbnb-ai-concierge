@@ -84,6 +84,15 @@ function mapProperty(row: Row): Property {
       extraInstructions: str(settings.extraInstructions),
       servicePreferences: str(settings.servicePreferences),
       escalationInstructions: str(settings.escalationInstructions),
+      offeringType:
+        settings.offeringType === "activity" || settings.offeringType === "service"
+          ? settings.offeringType
+          : settings.offeringType === "stay"
+            ? "stay"
+            : undefined,
+      offeringCategory: str(settings.offeringCategory) || undefined,
+      priceLabel: str(settings.priceLabel) || undefined,
+      duration: str(settings.duration) || undefined,
     },
     createdAt: str(row.created_at, new Date().toISOString()),
     updatedAt: str(row.updated_at, new Date().toISOString()),
@@ -115,6 +124,34 @@ function propertyColumns(input: PropertyInput) {
   };
 }
 
+function mapAffiliation(value: unknown): GuestSession["preferences"]["affiliation"] {
+  if (!value || typeof value !== "object") return undefined;
+  const source = value as Row;
+  const status = str(source.status);
+  if (
+    typeof source.guestUserId !== "string" ||
+    !["pending", "accepted", "declined"].includes(status) ||
+    typeof source.hostId !== "string"
+  ) {
+    return undefined;
+  }
+  return {
+    id: str(source.id),
+    guestUserId: source.guestUserId,
+    guestName: str(source.guestName),
+    guestEmail: str(source.guestEmail),
+    hostId: source.hostId,
+    hostName: str(source.hostName),
+    propertyId: str(source.propertyId),
+    propertyName: str(source.propertyName),
+    status: status as "pending" | "accepted" | "declined",
+    initiatedBy: source.initiatedBy === "host" ? "host" : "guest",
+    reservationId: nullableStr(source.reservationId),
+    createdAt: str(source.createdAt, new Date().toISOString()),
+    updatedAt: str(source.updatedAt, new Date().toISOString()),
+  };
+}
+
 function mapGuestSession(row: Row): GuestSession {
   const prefs = (row.preferences ?? {}) as Record<string, unknown>;
   return {
@@ -122,12 +159,12 @@ function mapGuestSession(row: Row): GuestSession {
     propertyId: str(row.property_id),
     guestName: str(row.guest_name),
     checkInDate: str(row.check_in_date),
-    checkOutDate: str(row.check_out_date),
-    preferences: {
+    checkOutDate: str(row.check_out_date),        preferences: {
       interests: arr<string>(prefs.interests),
       notes: str(prefs.notes),
       consent: prefs.consent === true,
       updatedAt: nullableStr(prefs.updatedAt) ?? undefined,
+      affiliation: mapAffiliation(prefs.affiliation),
     },
     createdAt: str(row.created_at),
   };
@@ -330,6 +367,13 @@ export class SupabaseRepository implements Repository {
     return (data ?? []).map(mapProperty);
   }
 
+  async listAllProperties() {
+    const data = await this.one<Row[]>(
+      this.client.from("properties").select("*").order("created_at", { ascending: true }),
+    );
+    return (data ?? []).map(mapProperty);
+  }
+
   async createProperty(hostId: string, input: PropertyInput) {
     const data = await this.one<Row>(
       this.client
@@ -416,6 +460,16 @@ export class SupabaseRepository implements Repository {
         .from("guest_sessions")
         .select("*")
         .in("property_id", propertyIds)
+        .order("created_at", { ascending: false }),
+    );
+    return (data ?? []).map(mapGuestSession);
+  }
+
+  async listAllGuestSessions() {
+    const data = await this.one<Row[]>(
+      this.client
+        .from("guest_sessions")
+        .select("*")
         .order("created_at", { ascending: false }),
     );
     return (data ?? []).map(mapGuestSession);

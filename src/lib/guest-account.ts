@@ -3,14 +3,15 @@ import { createSupabaseAdminClient } from "./data/supabase";
 import { isSupabaseConfigured } from "./env";
 import { chooseCurrentStay } from "./guest-profile";
 import { createSupabaseServerClient } from "./supabase/server";
-import type { Reservation } from "./types";
+import type { GuestAccount, Reservation } from "./types";
 
 /* Guest accounts are real Supabase Auth users, tagged app_metadata.role =
-   "guest" so the host session guard can never mistake them for a host. The
-   profile itself still comes from the reservation linked to their email. */
+   "guest" so the host session guard can never mistake them for a host. A stay
+   is optional: if the account email matches a booking it is linked and offered
+   after sign-in, otherwise the guest can browse hosts and request affiliation. */
 
 type AccountResult =
-  | { ok: true; booking: Reservation }
+  | { ok: true; booking: Reservation | null }
   | { ok: false; error: string; status?: number };
 
 async function findBookableStay(email: string) {
@@ -35,16 +36,6 @@ export async function signUpGuestAccount(input: {
   }
 
   const email = input.email.trim().toLowerCase();
-  const booking = await findBookableStay(email);
-  if (!booking) {
-    return {
-      ok: false,
-      error:
-        "We couldn't find an active or upcoming booking for that email. Use the email on your reservation, or ask your host to add it.",
-      status: 404,
-    };
-  }
-
   const admin = createSupabaseAdminClient();
   const created = await admin.auth.admin.createUser({
     email,
@@ -59,7 +50,7 @@ export async function signUpGuestAccount(input: {
     return {
       ok: false,
       error: exists
-        ? "A guest account with that email already exists. Sign in instead."
+        ? "An account with that email already exists. Sign in instead."
         : "The guest account could not be created. Please try again.",
       status: exists ? 409 : 500,
     };
@@ -82,6 +73,9 @@ export async function signUpGuestAccount(input: {
     };
   }
 
+  // The account exists even when there is no booking. This is what lets a
+  // first-time guest join the site and browse hosts on their own.
+  const booking = await findBookableStay(email);
   return { ok: true, booking };
 }
 
@@ -110,6 +104,9 @@ export async function signInGuestAccount(
   }
 
   if (data.user.app_metadata?.role !== "guest") {
+    // Clear only this attempt. A host should not lose their existing host
+    // session just because they used the guest form by mistake.
+    await supabase.auth.signOut({ scope: "local" });
     return {
       ok: false,
       error: "That account is not a guest account. Use the host sign-in instead.",
@@ -118,21 +115,11 @@ export async function signInGuestAccount(
   }
 
   const booking = await findBookableStay(data.user.email ?? email);
-  if (!booking) {
-    await supabase.auth.signOut();
-    return {
-      ok: false,
-      error:
-        "That guest account has no active or upcoming stay. Ask your host to add the booking email.",
-      status: 404,
-    };
-  }
-
   return { ok: true, booking };
 }
 
 /** The signed-in Supabase user, only when it is a guest account. */
-export async function getGuestAccount() {
+export async function getGuestAccount(): Promise<GuestAccount | null> {
   if (!isSupabaseConfigured) return null;
 
   try {
@@ -141,6 +128,7 @@ export async function getGuestAccount() {
     if (!data.user || data.user.app_metadata?.role !== "guest") return null;
 
     return {
+      id: data.user.id,
       email: data.user.email ?? "",
       fullName:
         (data.user.user_metadata?.full_name as string | undefined) ??

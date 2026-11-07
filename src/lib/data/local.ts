@@ -349,6 +349,13 @@ export class LocalRepository implements Repository {
       .map(clone);
   }
 
+  async listAllProperties() {
+    const db = await load();
+    return [...db.properties]
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      .map(clone);
+  }
+
   async createProperty(hostId: string, input: PropertyInput) {
     return mutate((db) => {
       const now = new Date().toISOString();
@@ -406,6 +413,13 @@ export class LocalRepository implements Repository {
     const db = await load();
     return db.guestSessions
       .filter((s) => propertyIds.includes(s.propertyId))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map(clone);
+  }
+
+  async listAllGuestSessions() {
+    const db = await load();
+    return [...db.guestSessions]
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .map(clone);
   }

@@ -1,8 +1,11 @@
 # Airbnb AI Concierge
 
-An AI hospitality concierge for short stays: guests get verified property answers,
-personalised Barcelona recommendations and a support channel; hosts get a property
-record editor, real maintenance tickets and AI-generated conversation summaries.
+A host-and-guest connection site with a concierge foundation. Guests create
+independent accounts, browse public host profiles and ask to connect. Hosts create
+their own profile and first offering, then accept or decline requests. Existing stay
+tools add the original concierge experience.
+
+**Live:** <https://airbnb-ai-concierge-zeta.vercel.app>
 
 Built with **Next.js 16 (App Router) + TypeScript + Tailwind CSS 4**, **Claude**
 (Anthropic Messages API with tool use), and **Supabase** (Postgres, Auth, RLS).
@@ -13,11 +16,35 @@ Built with **Next.js 16 (App Router) + TypeScript + Tailwind CSS 4**, **Claude**
 
 ---
 
+## Host and guest flow
+
+- **Guest accounts** are standalone Supabase Auth users tagged
+  `app_metadata.role = "guest"`. Any valid email can join; if the email matches an
+  official reservation, the stay is linked automatically. No booking is required.
+- **Host accounts** are tagged `app_metadata.role = "host"`. Host signup creates the
+  profile and the host's first offering. A new host is never seeded with the demo
+  Casa Barcelona property.
+- **Browsing:** `/hosts` is the public directory; `/hosts/[hostId]` is the public host
+  profile with one clear “Ask to connect” action.
+- **Affiliations:** guests track requests in `/connections`; hosts answer them in
+  `/host/affiliations`. Pending, accepted, declined and retry states are visible to
+  both sides.
+- **Reservations:** a host can create a reservation; signup with the matching email
+  links the stay, and the guest can request affiliation from “My stay”.
+- **Role guards:** guest accounts cannot open the host workspace, and host accounts
+  cannot open the guest profile area.
+
+---
+
 ## What works
 
 | Area | Behaviour |
 | --- | --- |
-| Guest demo | One click creates a stay on the demo property and sets a signed cookie. No signup. |
+| Guest accounts | Independent signup with any valid email, optional booking linking, and a clear no-stay state. |
+| Host onboarding | Self-service account plus first offering; the public profile is built from what the host enters. |
+| Host directory | Guests browse hosts and offerings, open profiles, and request a connection. |
+| Affiliations | Host accepts or declines; guest and host see the same status; declined requests can be retried. |
+| Guest demo | Optional one-click demo stay on the demo property, with a signed cookie. It does not create an account and cannot receive a host answer. |
 | My stay | Check-in/out steps, Wi-Fi with copy button, house rules, appliance guides, amenities, emergency info, FAQs, host contact — all from the database. |
 | Concierge | Real Claude Messages API call with a tailored system prompt, conversation history and five tools. |
 | Guided mode | With no model key at all, the concierge still works: a deterministic agent answers from the same property record and curated guide, and files real tickets with a confirmation step. It is labelled “Guided mode” in the UI and never claims to be a language model. |
@@ -29,7 +56,7 @@ Built with **Next.js 16 (App Router) + TypeScript + Tailwind CSS 4**, **Claude**
 | Plan | A saved, editable day-by-day itinerary built from the curated guide: three stops a day, ordered by the guest's interests, with tick-off, custom stops and a rebuild. The concierge reads and edits the same plan through `get_itinerary` / `add_itinerary_item`, in both model and guided mode. |
 | Explore | Filterable Barcelona guide, clearly labelled as curated demonstration data. |
 | Support | Guest-facing request form, emergency escalation to 112, and a list of that guest's tickets. |
-| Host auth | Supabase email/password when configured, otherwise a documented demo host account. |
+| Host accounts | Self-service profile and first offering, Supabase email/password when configured, otherwise a documented demo host account. |
 | Host overview | Properties, current guests, next arrivals, open requests, unread notifications, recent interactions. |
 | Reservations | Per-property stays with an explicit source label (`manual`, `demo`, or `airbnb`), inline status changes and a link to the guest session. New stays can be added by hand and are validated server-side. |
 | Airbnb connection | Connection state, server-side credential storage, a sync log and honest failure messages. There is no live Airbnb access: the API is partner-only, so nothing is ever presented as imported. |
@@ -48,7 +75,8 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open <http://localhost:3000>.
+Open <http://localhost:3000>. Start with `/hosts` for the public directory, `/guest/signup`
+for a guest account, or `/host/signup` for host onboarding.
 
 Without any credentials the app runs on a **local development store** (`.data/concierge.json`):
 the demo property, guests, tickets and notifications persist across restarts, and the
@@ -68,11 +96,11 @@ The model identifier is configurable, so moving to a newer Claude model needs no
 
 | Role | Credentials |
 | --- | --- |
-| Guest | Click **I'm a Guest** — no account required |
-| Host (local mode) | `host@casabarcelona.demo` / `Concierge2026` |
+| Guest | Create an account at `/guest/signup` with any valid email, or open the demo stay from `/guest/login` (no account required) |
+| Host | `host@casabarcelona.demo` / `Concierge2026` for the demo, or create a new host at `/host/signup` |
 
-With Supabase configured, create host users in **Supabase → Authentication → Users**.
-A matching `profiles` row is created automatically on first sign-in.
+With Supabase configured, signup creates confirmed accounts and profiles. No dashboard
+setup is needed. A new host adds the first offering as part of onboarding.
 
 ---
 
@@ -112,12 +140,10 @@ A matching `profiles` row is created automatically on first sign-in.
    The guest plan needs no migration: it lives in the `preferences` JSON column of the
    guest's session, which every deployment already has.
 4. Copy the project URL, anon key and service-role key into `.env.local`.
-5. Open `/host/login` and press **Enter the demo host dashboard**. The demo host
-   (`host@casabarcelona.demo`) is provisioned on first use with the service-role key and
-   signed in through Supabase auth, so no manual account is needed; the profile row and
-   the starter property (Casa Barcelona) are created automatically. To use your own
-   account instead, create one at `/host/signup` — it is confirmed immediately — or add
-   it in **Authentication → Users** and sign in with the form.
+5. Open `/host/login` and press **Enter the demo host dashboard** for the demo account,
+   or create your own host at `/host/signup`. Signup creates the confirmed account, the
+   profile row and the host's first offering. No manual user creation is required; real
+   hosts are never seeded with the Casa Barcelona property.
 6. Keep `.data/` out of version control (already ignored) and never commit `.env.local`.
 
 ### Demo without Supabase (no SQL to paste)
@@ -151,9 +177,11 @@ Every reservation row carries a source, shown in the host UI and on the guest pa
   Supabase client, so RLS restricts reads/writes to properties where
   `host_id = auth.uid()`. The app additionally verifies property ownership before
   updating tickets.
-* **Guests** never touch Supabase directly. Their server routes use the service-role key
-  and resolve the stay from a signed, HTTP-only cookie — a guest cannot read another
-  guest's conversation by changing an id in a request.
+* **Guests** sign up and sign in through Supabase Auth with `app_metadata.role = "guest"`.
+  Guest routes resolve the signed-in user server-side; the optional demo stay uses a
+  signed HTTP-only cookie. A guest cannot read another guest's data by changing an id.
+* **Role separation** is enforced in the session helpers: a guest account cannot open
+  `/host`, and a host account cannot open the guest profile area.
 * **Claude** runs only on the server. The browser sends a message, never a key or a
   property id.
 
@@ -216,6 +244,15 @@ supabase/schema.sql              tables, indexes, triggers, RLS
 
 ## Deploying to Vercel
 
+The current production deployment is <https://airbnb-ai-concierge-zeta.vercel.app>.
+The project is linked in `.vercel/`, so the current working tree can be released with:
+
+```bash
+npx vercel@latest deploy --prod --yes
+```
+
+For a fresh Vercel project:
+
 1. Push the repository to GitHub.
 2. Import it in Vercel (framework preset: Next.js — no custom build settings needed).
 3. Add the environment variables above for **Production** and **Preview**.
@@ -235,6 +272,14 @@ filesystem is read-only).
 npm run typecheck
 npm run build
 npm run smoke     # end-to-end checks against a running instance
+```
+
+The host/guest acceptance suite and live release checklist are in
+[`TEST_CHECKLIST.md`](TEST_CHECKLIST.md). With a production build running on port 3102:
+
+```bash
+node scripts/qa-flow.mjs
+node scripts/qa-links.mjs
 ```
 
 `npm run smoke` drives the guest's real HTTP surface — session, plan build, tick,

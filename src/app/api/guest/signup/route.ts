@@ -38,18 +38,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const repo = await getGuestRepo();
-    const property = await repo.getProperty(result.booking.propertyId);
-    if (!property) {
-      return NextResponse.json(
-        { error: "That booking is no longer attached to a property." },
-        { status: 404 },
-      );
+    if (result.booking) {
+      const repo = await getGuestRepo();
+      const property = await repo.getProperty(result.booking.propertyId);
+      if (property) {
+        const guest = await ensureGuestStay(repo, result.booking);
+        await createGuestCookie(guest.id);
+        return NextResponse.json({ ok: true, redirect: "/welcome" }, { status: 201 });
+      }
     }
 
-    const guest = await ensureGuestStay(repo, result.booking);
-    await createGuestCookie(guest.id);
-    return NextResponse.json({ ok: true, redirect: "/welcome" }, { status: 201 });
+    return NextResponse.json({ ok: true, redirect: "/hosts" }, { status: 201 });
   } catch (error) {
     console.error("[guest/signup] could not create the account", error);
     if (error instanceof MigrationRequiredError) {

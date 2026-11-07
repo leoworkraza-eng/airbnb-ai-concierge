@@ -19,8 +19,9 @@ export async function GET(request: Request) {
   const property = await repo.getPrimaryProperty();
 
   if (!property) {
-    // Nothing to visit yet: send the operator to the host sign-in that seeds it.
-    return NextResponse.redirect(new URL("/host/login?setup=property", request.url));
+    // Nothing to visit yet. The host directory explains how to create the first
+    // offering instead of sending a guest to a host-only screen.
+    return NextResponse.redirect(new URL("/hosts", request.url));
   }
 
   // Starting the demo repeatedly must not grow the host's guest list. Reuse a

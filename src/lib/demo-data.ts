@@ -394,6 +394,7 @@ export const barcelonaPlaces: Place[] = [
     tags: ["nightlife", "cocktails", "dancing", "late", "music"],
     distanceKm: 1.8,
     bestTime: "evening",
+    subtype: "Club",
   },
   {
     id: "pl-night-poble",
@@ -406,6 +407,7 @@ export const barcelonaPlaces: Place[] = [
     tags: ["nightlife", "rooftop", "groups", "beach", "cocktails"],
     distanceKm: 3.6,
     bestTime: "evening",
+    subtype: "Lounge",
   },
   {
     id: "pl-night-gracia",
@@ -418,6 +420,7 @@ export const barcelonaPlaces: Place[] = [
     tags: ["nightlife", "cheap", "local", "late", "casual"],
     distanceKm: 2.4,
     bestTime: "evening",
+    subtype: "Bar",
   },
   {
     id: "pl-flamenco",
@@ -430,6 +433,7 @@ export const barcelonaPlaces: Place[] = [
     tags: ["flamenco", "show", "culture", "evening", "booking"],
     distanceKm: 2.1,
     bestTime: "evening",
+    subtype: "Flamenco show",
   },
   {
     id: "pl-cinema",

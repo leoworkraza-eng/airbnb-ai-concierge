@@ -12,6 +12,7 @@ import { GuestShell } from "@/components/guest/GuestShell";
 import { RequestForm } from "@/components/guest/RequestForm";
 import { Card, EmptyState, Note, Pill } from "@/components/ui";
 import { getGuestContext } from "@/lib/guest-context";
+import { getGuestAccount } from "@/lib/guest-account";
 import { getGuestRepo } from "@/lib/data";
 import {
   formatDateTime,
@@ -26,7 +27,10 @@ export const dynamic = "force-dynamic";
 
 export default async function SupportPage() {
   const context = await getGuestContext();
-  if (!context) redirect("/guest/login");
+  if (!context) {
+    const account = await getGuestAccount();
+    redirect(account ? "/stay" : "/guest/login?next=/support");
+  }
 
   const { property, guest } = context;
   const repo = await getGuestRepo();

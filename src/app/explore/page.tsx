@@ -19,6 +19,7 @@ import { GuestShell } from "@/components/guest/GuestShell";
 import { Card, Pill } from "@/components/ui";
 import { Reveal } from "@/components/motion";
 import { getGuestContext } from "@/lib/guest-context";
+import { getGuestAccount } from "@/lib/guest-account";
 import { barcelonaPlaces } from "@/lib/demo-data";
 import { googlePlacesEnabled } from "@/lib/env";
 import { placePhoto } from "@/lib/media";
@@ -55,7 +56,10 @@ export default async function ExplorePage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const context = await getGuestContext();
-  if (!context) redirect("/guest/login");
+  if (!context) {
+    const account = await getGuestAccount();
+    redirect(account ? "/stay" : "/guest/login?next=/explore");
+  }
 
   const { property, guest } = context;
   const { category } = await searchParams;
@@ -79,8 +83,8 @@ export default async function ExplorePage({
           </h1>
           <p className="mt-1.5 max-w-2xl text-[13.5px] leading-relaxed text-muted">
             A starting point from the apartment — walkable neighbourhoods, Gaudí,
-            markets and low-key places to eat. Ask the concierge to narrow it down by
-            budget, distance or time of day.
+            markets, places to eat, and a nightlife list with real club, bar and lounge
+            labels. Ask the concierge to narrow it down.
           </p>
         </div>
         <Link href="/concierge" className="btn-secondary btn-sm">
@@ -100,6 +104,13 @@ export default async function ExplorePage({
             : "No Google Places key is configured, so the concierge uses this dataset only."}
         </p>
       </div>
+
+      {active === "nightlife" ? (
+        <p className="mb-4 rounded-xl border border-line bg-white px-4 py-2.5 text-[12px] text-muted">
+          <span className="font-medium text-ink">Nightlife:</span> clubs, bars and
+          lounges are labelled on each card.
+        </p>
+      ) : null}
 
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <Link
@@ -165,7 +176,7 @@ export default async function ExplorePage({
                   <div className="absolute inset-x-3 top-3 flex items-start justify-between">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[10.5px] font-medium text-white backdrop-blur-md">
                       <meta.icon className="size-3" strokeWidth={2} />
-                      {meta.label}
+                      {place.subtype ?? meta.label}
                     </span>
                     <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10.5px] font-semibold text-ink">
                       {priceLabel(place.price)}

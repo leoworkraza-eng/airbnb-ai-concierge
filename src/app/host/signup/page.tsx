@@ -1,102 +1,79 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Building2, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, Building2, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/brand";
 import { SignupForm } from "@/components/host/SignupForm";
 import { Disclaimer } from "@/components/guest/GuestShell";
 import { Note } from "@/components/ui";
 import { getHostSession } from "@/lib/auth";
+import { getGuestAccount } from "@/lib/guest-account";
 import { isSupabaseConfigured } from "@/lib/env";
 
 export const metadata = { title: "Create a host account" };
 export const dynamic = "force-dynamic";
 
 export default async function HostSignupPage() {
-  const session = await getHostSession();
+  const [session, guest] = await Promise.all([getHostSession(), getGuestAccount()]);
   if (session) redirect("/host");
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
-      <div className="relative hidden flex-col justify-between overflow-hidden bg-ink p-10 text-cream lg:flex">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-32 -right-24 size-[420px] rounded-full bg-[radial-gradient(circle,#E22B4F_0%,rgba(226,43,79,0)_68%)] opacity-30"
-        />
-        <Logo tone="light" />
-
-        <div className="relative max-w-md">
-          <p className="eyebrow text-white/40">Host workspace</p>
-          <h1 className="mt-4 font-display text-[40px] leading-[1.06] text-white">
-            Your property record. Your rules. Your dashboard.
-          </h1>
-          <p className="mt-4 text-[14px] leading-relaxed text-white/55">
-            An account starts with the Casa Barcelona record already filled in, so you
-            can ask the concierge a question within a minute of signing up.
-          </p>
-
-          <div className="mt-8 space-y-3">
-            {[
-              "One verified record behind every guest answer",
-              "Tickets with priorities and statuses you control",
-              "Conversation briefs instead of reading transcripts",
-            ].map((item) => (
-              <div key={item} className="flex items-start gap-2.5 text-[12.5px] text-white/70">
-                <span className="mt-0.5 grid size-4 place-items-center rounded-full bg-white/10">
-                  <Sparkles className="size-2.5 text-brand" />
-                </span>
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="relative flex items-center gap-2 text-[11px] text-white/35">
-          <ShieldCheck className="size-3.5" />
-          Host data is scoped to your account. Guest flows never expose your dashboard.
-        </div>
-      </div>
-
-      <div className="flex flex-col justify-center px-5 py-10 sm:px-12">
-        <div className="mx-auto w-full max-w-sm">
-          <div className="lg:hidden">
-            <Logo />
-          </div>
-          <Link
-            href="/host/login"
-            className="mt-8 inline-flex items-center gap-1.5 text-[12px] text-muted transition hover:text-ink"
-          >
-            <ArrowLeft className="size-3.5" /> Back to sign in
+    <div className="min-h-screen bg-cream">
+      <header className="border-b border-line bg-cream/85">
+        <div className="container-page flex h-16 items-center justify-between">
+          <Logo />
+          <Link href="/host/login" className="text-[12px] font-medium text-brand">
+            Host sign in
           </Link>
-
-          <h2 className="mt-5 text-[26px] leading-tight font-semibold">Create your account</h2>
-          <p className="mt-1.5 text-[13px] text-muted">
-            A real Supabase account, created and confirmed here — no dashboard step.
+        </div>
+      </header>
+      <main className="container-page max-w-2xl py-8 sm:py-10">
+        <Link
+          href="/host/login"
+          className="inline-flex items-center gap-1.5 text-[12px] text-muted transition hover:text-ink"
+        >
+          <ArrowLeft className="size-3.5" /> Back to host sign in
+        </Link>
+        <div className="mt-5">
+          <p className="eyebrow">Host workspace</p>
+          <h1 className="mt-1.5 text-[30px] leading-tight font-semibold">
+            Create your host account
+          </h1>
+          <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-muted">
+            Describe yourself and your first offering. Guests will see this in the
+            host directory and can ask to connect.
           </p>
+        </div>
 
-          {isSupabaseConfigured ? (
-            <div className="mt-7">
-              <SignupForm />
-            </div>
+        <div className="mt-6">
+          {guest ? (
+            <Note tone="warning">
+              You are signed in as a guest.{" "}
+              <a href="/api/guest/reset" className="font-medium underline">
+                Sign out of the guest account
+              </a>{" "}
+              before creating a host account.
+            </Note>
+          ) : isSupabaseConfigured ? (
+            <SignupForm />
           ) : (
-            <Note tone="warning" className="mt-6" icon={<Building2 className="size-4" />}>
-              <span className="font-medium">Supabase is not configured.</span> Local mode
-              has a single demo host; add the Supabase variables to create real accounts.
+            <Note tone="warning" icon={<Building2 className="size-4" />}>
+              Host accounts need Supabase. In local mode, use the demo host on the host
+              sign-in page.
             </Note>
           )}
-
-          <p className="mt-5 text-[11.5px] leading-relaxed text-muted">
-            Already have an account?{" "}
-            <Link href="/host/login" className="font-medium text-brand">
-              Sign in
-            </Link>
-            .
-          </p>
-
-          <div className="mt-8 border-t border-line pt-5">
-            <Disclaimer />
-          </div>
         </div>
-      </div>
+
+        <div className="mt-8 flex items-start gap-2.5 border-t border-line pt-5 text-[11px] text-muted">
+          <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+          <p>
+            Host and guest accounts are separate. A host account cannot open a guest
+            profile and a guest account cannot open the host workspace.
+          </p>
+        </div>
+        <div className="mt-4">
+          <Disclaimer />
+        </div>
+      </main>
     </div>
   );
 }

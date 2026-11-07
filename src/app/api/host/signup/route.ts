@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { signUpHost } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
-import { signupSchema } from "@/lib/validation";
+import { hostSignupSchema } from "@/lib/validation";
 
-/* Creates a confirmed Supabase account and signs it in. The email step is
-   skipped so the demo never depends on an inbox, and the password is only ever
-   held by Supabase auth — this application stores no credentials. */
+/* Creates a confirmed Supabase account, signs it in, and saves the host's first
+   offering. No email confirmation step, and no seeded property the host did not
+   describe. */
 export async function POST(request: Request) {
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
 
-  const limit = rateLimit(`signup:${ip}`, 5, 60_000);
+  const limit = rateLimit(`host-signup:${ip}`, 5, 60_000);
   if (!limit.allowed) {
     return NextResponse.json(
       { error: `Too many attempts. Please wait ${limit.retryAfter}s.` },
@@ -19,18 +18,34 @@ export async function POST(request: Request) {
     );
   }
 
-  let parsed: z.infer<typeof signupSchema>;
-  try {
-    parsed = signupSchema.parse(await request.json());
-  } catch (error) {
-    const message =
-      error instanceof z.ZodError
-        ? error.issues[0]?.message ?? "Please check your details."
-        : "Please check your details.";
-    return NextResponse.json({ error: message }, { status: 400 });
+  const parsed = hostSignupSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Please check your details." },
+      { status: 400 },
+    );
   }
 
-  const result = await signUpHost(parsed);
+  const data = parsed.data;
+  const result = await signUpHost({
+    email: data.email,
+    password: data.password,
+    fullName: data.fullName,
+    offering: {
+      name: data.offeringName,
+      type: data.offeringType,
+      category: data.offeringCategory,
+      city: data.city,
+      neighbourhood: data.neighbourhood,
+      description: data.description,
+      address: data.address,
+      hostName: data.fullName,
+      hostEmail: data.email,
+      priceLabel: data.priceLabel,
+      duration: data.duration,
+    },
+  });
+
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
