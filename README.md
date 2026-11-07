@@ -21,6 +21,9 @@ Built with **Next.js 16 (App Router) + TypeScript + Tailwind CSS 4**, **Claude**
 - **Guest accounts** are standalone Supabase Auth users tagged
   `app_metadata.role = "guest"`. Any valid email can join; if the email matches an
   official reservation, the stay is linked automatically. No booking is required.
+- **Planning workspace:** a guest with no booking still gets the welcome page, city
+  guide, plan, concierge and support, using the demo Barcelona base and clearly
+  labelled as planning mode.
 - **Host accounts** are tagged `app_metadata.role = "host"`. Host signup creates the
   profile and the host's first offering. A new host is never seeded with the demo
   Casa Barcelona property.

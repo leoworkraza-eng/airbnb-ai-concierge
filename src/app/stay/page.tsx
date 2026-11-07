@@ -75,7 +75,7 @@ export default async function StayPage() {
     );
   }
 
-  const { property, guest } = context;
+  const { property, guest, isPlanning } = context;
   const nights = nightsBetween(guest.checkInDate, guest.checkOutDate);
   const repo = await getGuestRepo();
   const reservation = account
@@ -92,8 +92,31 @@ export default async function StayPage() {
       propertyName={property.name}
       active="stay"
       guestName={guest.guestName}
+      hasStay={!isPlanning}
+      planning={isPlanning}
     >
       <div className="space-y-6">
+        {isPlanning ? (
+          <Card className="flex flex-col gap-4 border-brand/15 bg-brand-soft/30 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10.5px] font-semibold tracking-[0.14em] text-brand-dark uppercase">
+                Planning mode
+              </p>
+              <p className="mt-1 text-[13px] font-medium">
+                No booking linked to this account
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed text-muted">
+                You are exploring the demo Barcelona base. The concierge, city
+                guide, plan and support all work; ask a host to connect to make it
+                your stay.
+              </p>
+            </div>
+            <Link href="/hosts" className="btn-secondary btn-sm shrink-0">
+              Find a host
+            </Link>
+          </Card>
+        ) : null}
+
         {account && reservation ? (
           <Card className="flex flex-col gap-4 border-brand/15 bg-brand-soft/30 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -130,7 +153,8 @@ export default async function StayPage() {
             <div className="relative">
               <div className="flex flex-wrap items-center gap-2">
                 <Pill tone="brand">
-                  <span className="size-1.5 rounded-full bg-brand" /> In residence
+                  <span className="size-1.5 rounded-full bg-brand" />{" "}
+                  {isPlanning ? "Planning mode" : "In residence"}
                 </Pill>
                 <Pill tone="neutral">
                   <MapPin className="size-3" /> {property.neighbourhood}, {property.city}

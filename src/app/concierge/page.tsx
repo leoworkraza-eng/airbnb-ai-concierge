@@ -33,7 +33,7 @@ export default async function ConciergePage({
     redirect(account ? "/stay" : "/guest/login?next=/concierge");
   }
 
-  const { property, guest } = context;
+  const { property, guest, isPlanning } = context;
   const { prompt } = await searchParams;
 
   const repo = await getGuestRepo();
@@ -49,7 +49,13 @@ export default async function ConciergePage({
   const plan = await repo.listItinerary(guest.id).catch(() => []);
 
   return (
-    <GuestShell propertyName={property.name} active="concierge" guestName={guest.guestName}>
+    <GuestShell
+      propertyName={property.name}
+      active="concierge"
+      guestName={guest.guestName}
+      planning={isPlanning}
+      hasStay={!isPlanning}
+    >
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="eyebrow">Your concierge</p>

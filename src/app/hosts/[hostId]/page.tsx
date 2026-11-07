@@ -146,6 +146,7 @@ export default async function HostProfilePage({
         active="hosts"
         guestName={account?.fullName ?? "Demo guest"}
         hasStay={Boolean(demoSessionId)}
+        planning={Boolean(account) && !demoSessionId}
       >
         {content}
       </GuestShell>

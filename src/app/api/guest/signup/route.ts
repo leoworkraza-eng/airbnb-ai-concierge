@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ ok: true, redirect: "/hosts" }, { status: 201 });
+    return NextResponse.json({ ok: true, redirect: "/welcome" }, { status: 201 });
   } catch (error) {
     console.error("[guest/signup] could not create the account", error);
     if (error instanceof MigrationRequiredError) {

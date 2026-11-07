@@ -80,6 +80,9 @@ export type GuestPreferences = {
   /* Affiliations use the existing guest_sessions record so this feature works
      on the current database without a migration. */
   affiliation?: Affiliation;
+  /* Marks the workspace session of a guest account that has no booking, so it
+     can be reused instead of creating a new row on every visit. */
+  planningGuestUserId?: string;
 };
 
 export type GuestSession = {

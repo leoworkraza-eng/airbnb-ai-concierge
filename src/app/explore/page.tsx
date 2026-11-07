@@ -61,7 +61,7 @@ export default async function ExplorePage({
     redirect(account ? "/stay" : "/guest/login?next=/explore");
   }
 
-  const { property, guest } = context;
+  const { property, guest, isPlanning } = context;
   const { category } = await searchParams;
   const active =
     category && category in categoryMeta ? (category as Place["category"]) : "all";
@@ -74,7 +74,13 @@ export default async function ExplorePage({
   const interests = guest.preferences.interests;
 
   return (
-    <GuestShell propertyName={property.name} active="explore" guestName={guest.guestName}>
+    <GuestShell
+      propertyName={property.name}
+      active="explore"
+      guestName={guest.guestName}
+      planning={isPlanning}
+      hasStay={!isPlanning}
+    >
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Explore Barcelona</p>

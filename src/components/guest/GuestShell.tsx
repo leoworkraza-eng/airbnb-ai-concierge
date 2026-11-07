@@ -40,16 +40,14 @@ export type GuestTab =
 type NavItem = { id: GuestTab; label: string; href: string; icon: LucideIcon };
 
 const noStayTabs: NavItem[] = [
+  { id: "welcome", label: "Overview", href: "/welcome", icon: House },
   { id: "stay", label: "My stay", href: "/stay", icon: KeyRound },
   { id: "hosts", label: "Hosts", href: "/hosts", icon: MapPin },
   { id: "connections", label: "Connections", href: "/connections", icon: UsersRound },
   { id: "profile", label: "Profile", href: "/profile", icon: UserRound },
 ];
 
-const stayTabs: NavItem[] = [
-  { id: "welcome", label: "Overview", href: "/welcome", icon: House },
-  ...noStayTabs,
-];
+const stayTabs: NavItem[] = noStayTabs;
 
 const stayTools: NavItem[] = [
   { id: "itinerary", label: "Plan", href: "/itinerary", icon: CalendarRange },
@@ -72,15 +70,18 @@ export function GuestShell({
   active,
   guestName,
   hasStay = true,
+  planning = false,
   children,
 }: {
   propertyName: string;
   active: GuestTab;
   guestName: string;
   hasStay?: boolean;
+  planning?: boolean;
   children: ReactNode;
 }) {
-  const tabs = hasStay ? stayTabs : noStayTabs;
+  const withTools = hasStay || planning;
+  const tabs = withTools ? stayTabs : noStayTabs;
   return (
     <div className="flex min-h-screen flex-col bg-cream">
       <header className="sticky top-0 z-30 border-b border-line/70 bg-cream/85 backdrop-blur-xl">
@@ -91,7 +92,8 @@ export function GuestShell({
             <div className="hidden min-w-0 sm:block">
               <p className="truncate text-[13px] font-medium text-ink">{propertyName}</p>
               <p className="text-[11px] text-muted">
-                {hasStay ? "Guest stay" : "Guest account"} · {guestName}
+                {hasStay ? "Guest stay" : planning ? "Planning" : "Guest account"} ·{" "}
+                {guestName}
               </p>
             </div>
           </div>
@@ -130,11 +132,11 @@ export function GuestShell({
               );
             })}
           </div>
-          {hasStay ? (
+          {withTools ? (
             <div className="border-t border-line/50 bg-white/35">
               <div className="container-page no-scrollbar flex items-center gap-1 overflow-x-auto py-1.5">
                 <span className="mr-1 shrink-0 text-[10px] tracking-[0.14em] text-muted uppercase">
-                  Stay tools
+                  {planning && !hasStay ? "Trip tools" : "Stay tools"}
                 </span>
                 {stayTools.map((tab) => {
                   const current = active === tab.id;

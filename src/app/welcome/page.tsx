@@ -40,7 +40,7 @@ export default async function WelcomePage() {
     redirect("/guest/login?next=/welcome");
   }
 
-  const { property, guest } = context;
+  const { property, guest, isPlanning } = context;
   const nights = nightsBetween(guest.checkInDate, guest.checkOutDate);
   const repo = await getGuestRepo();
   const requests = await repo.listMaintenanceForGuest(guest.id);
@@ -96,8 +96,27 @@ export default async function WelcomePage() {
   ] as const;
 
   return (
-    <GuestShell propertyName={property.name} active="welcome" guestName={guest.guestName}>
+    <GuestShell
+      propertyName={property.name}
+      active="welcome"
+      guestName={guest.guestName}
+      hasStay={!isPlanning}
+      planning={isPlanning}
+    >
       <div className="space-y-6">
+        {isPlanning ? (
+          <div className="flex flex-col gap-3 rounded-2xl border border-line bg-white px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[12.5px] leading-relaxed text-ink-soft">
+              <span className="font-semibold">Planning mode.</span> No booking is
+              linked to this account yet, so this is the demo Barcelona base. The
+              city guide, plan, concierge and support are all open — ask a host to
+              connect when you are ready.
+            </p>
+            <Link href="/hosts" className="btn-secondary btn-sm shrink-0">
+              Find a host <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+        ) : null}
         {/* Cover */}
         <Reveal y={18} blur={false}>
           <section className="relative overflow-hidden rounded-[26px] border border-line bg-ink">
@@ -115,7 +134,12 @@ export default async function WelcomePage() {
               <div className="max-w-xl">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10.5px] font-medium text-white backdrop-blur">
-                    <span className="size-1.5 rounded-full bg-emerald-400" /> In residence
+                    <span
+                      className={`size-1.5 rounded-full ${
+                        isPlanning ? "bg-amber-400" : "bg-emerald-400"
+                      }`}
+                    />
+                    {isPlanning ? "Planning mode" : "In residence"}
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 px-2.5 py-1 text-[10.5px] text-white/80">
                     {property.neighbourhood} · {property.city}
@@ -132,17 +156,32 @@ export default async function WelcomePage() {
                 </p>
 
                 <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] text-white/65">
-                  <span className="inline-flex items-center gap-1.5">
-                    <CalendarDays className="size-3.5" />
-                    {formatDate(guest.checkInDate, { weekday: "short" })} →{" "}
-                    {formatDate(guest.checkOutDate, { weekday: "short" })}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <Clock className="size-3.5" /> {nights} night{nights === 1 ? "" : "s"}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <KeyRound className="size-3.5" /> Check-out {property.checkOut}
-                  </span>
+                  {isPlanning ? (
+                    <>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Compass className="size-3.5" /> No reservation linked
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Sparkles className="size-3.5" /> Demo base ·{" "}
+                        {property.neighbourhood}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="inline-flex items-center gap-1.5">
+                        <CalendarDays className="size-3.5" />
+                        {formatDate(guest.checkInDate, { weekday: "short" })} →{" "}
+                        {formatDate(guest.checkOutDate, { weekday: "short" })}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Clock className="size-3.5" /> {nights} night
+                        {nights === 1 ? "" : "s"}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <KeyRound className="size-3.5" /> Check-out {property.checkOut}
+                      </span>
+                    </>
+                  )}
                 </div>
 
                 <div className="mt-7 flex flex-wrap gap-2.5">

@@ -1,6 +1,6 @@
 # Test checklist
 
-Verified on 7 November 2026 against a production build served at `http://localhost:3102`.
+Verified on 7 November 2026 against fresh production builds (`next build` + `next start`).
 
 **Production:** <https://airbnb-ai-concierge-zeta.vercel.app> — deployed 7 November 2026.
 
@@ -10,6 +10,7 @@ Verified on 7 November 2026 against a production build served at `http://localho
 - **34/34 pages loaded cleanly** across public, guest, booking-guest and host contexts (`scripts/qa-links.mjs`)
 - **68/68 unique internal links resolved**
 - **`npm run build` passed**, including TypeScript checking
+- **31/31 planning-mode checks passed:** signup redirects to `/welcome`, all six guest workspace pages return 200, one planning session is reused, and QA data is removed
 - **Live production checks passed:** `/`, `/hosts`, `/guest/signup` and `/host/login` returned 200; the spaced-email API request returned 400
 - QA accounts and their offerings, reservations, affiliations and support tickets were removed after the run
 
@@ -17,14 +18,14 @@ Verified on 7 November 2026 against a production build served at `http://localho
 
 | Scenario | Result | What was checked |
 | --- | --- | --- |
-| First-time guest creates an account | PASS | Standalone signup succeeds with any valid email and lands on `/hosts`; no host approval is required |
+| First-time guest creates an account | PASS | Standalone signup succeeds with any valid email and lands on `/welcome` in planning mode; no host approval is required |
 | Invalid email | PASS | `not-an-email` is rejected with a validation message; no account is created |
 | Email containing spaces | PASS | `not alex.rivera@example.com` is rejected before account creation |
 | Duplicate guest email | PASS | Existing account is reported clearly instead of creating a second account |
 | Wrong guest password | PASS | Sign-in is rejected without revealing account details |
-| Returning guest with no booking | PASS | Sign-in succeeds and routes to the host directory |
-| Signed-in “My stay” with no booking | PASS | Shows “No stay linked to this account”, not the signup screen |
-| Guest without a stay opens `/welcome` | PASS | Redirected to `/hosts` |
+| Returning guest with no booking | PASS | Sign-in succeeds and routes to `/welcome` in planning mode |
+| Signed-in “My stay” with no booking | PASS | Shows planning mode on the demo base with a route to find a host, not a dead end |
+| Guest without a stay opens `/welcome` | PASS | Planning workspace renders; `/concierge`, `/explore`, `/support` and `/itinerary` all return 200 |
 | Logged-out protected pages | PASS | `/profile` and `/stay` redirect to guest sign-in with the correct `next` target |
 | Guest with no connections | PASS | Useful empty state with a route to browse hosts |
 | Host onboarding | PASS | Account and first offering are created together; a new host does not inherit the Casa Barcelona offering |

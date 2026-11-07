@@ -91,6 +91,9 @@ export default async function LandingPage() {
                     <Link href="/connections" className="btn-secondary h-11 px-5">
                       Connections
                     </Link>
+                    <Link href="/concierge" className="btn-secondary h-11 px-5">
+                      Concierge
+                    </Link>
                   </>
                 ) : (
                   <>

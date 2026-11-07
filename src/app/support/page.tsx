@@ -32,12 +32,18 @@ export default async function SupportPage() {
     redirect(account ? "/stay" : "/guest/login?next=/support");
   }
 
-  const { property, guest } = context;
+  const { property, guest, isPlanning } = context;
   const repo = await getGuestRepo();
   const requests = await repo.listMaintenanceForGuest(guest.id);
 
   return (
-    <GuestShell propertyName={property.name} active="support" guestName={guest.guestName}>
+    <GuestShell
+      propertyName={property.name}
+      active="support"
+      guestName={guest.guestName}
+      planning={isPlanning}
+      hasStay={!isPlanning}
+    >
       <div className="mb-5">
         <p className="eyebrow">Support</p>
         <h1 className="mt-1.5 text-[28px] leading-tight font-semibold">

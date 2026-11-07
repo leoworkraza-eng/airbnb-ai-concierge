@@ -65,10 +65,15 @@ export default async function ConnectionsPage() {
 
   return (
     <GuestShell
-      propertyName={stay?.property.name ?? "Your guest account"}
+      propertyName={
+        stay?.isPlanning
+          ? "Your guest account"
+          : (stay?.property.name ?? "Your guest account")
+      }
       active="connections"
       guestName={account.fullName}
-      hasStay={Boolean(stay)}
+      hasStay={Boolean(stay && !stay.isPlanning)}
+      planning={Boolean(stay?.isPlanning)}
     >
       <div className="space-y-5">
         <div className="flex flex-wrap items-end justify-between gap-3">

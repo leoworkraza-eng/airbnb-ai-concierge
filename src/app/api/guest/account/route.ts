@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ ok: true, redirect: "/hosts" });
+    return NextResponse.json({ ok: true, redirect: "/welcome" });
   } catch (error) {
     console.error("[guest/account] could not sign in", error);
     if (error instanceof MigrationRequiredError) {

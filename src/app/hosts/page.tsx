@@ -133,10 +133,15 @@ export default async function HostsPage() {
   if (account || stay) {
     return (
       <GuestShell
-        propertyName={stay?.property.name ?? "Hosts in Barcelona"}
+        propertyName={
+          stay?.isPlanning
+            ? "Hosts in Barcelona"
+            : (stay?.property.name ?? "Hosts in Barcelona")
+        }
         active="hosts"
         guestName={account?.fullName ?? stay?.guest.guestName ?? "Guest"}
-        hasStay={Boolean(stay)}
+        hasStay={Boolean(stay && !stay.isPlanning)}
+        planning={Boolean(stay?.isPlanning)}
       >
         {content}
       </GuestShell>

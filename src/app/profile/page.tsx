@@ -42,10 +42,15 @@ export default async function ProfilePage() {
 
   return (
     <GuestShell
-      propertyName={stay?.property.name ?? "Your guest account"}
+      propertyName={
+        stay?.isPlanning
+          ? "Your guest account"
+          : (stay?.property.name ?? "Your guest account")
+      }
       active="profile"
       guestName={name}
-      hasStay={Boolean(stay)}
+      hasStay={Boolean(stay && !stay.isPlanning)}
+      planning={Boolean(stay?.isPlanning)}
     >
       <div className="mx-auto max-w-3xl space-y-5">
         <Card className="overflow-hidden p-0">
@@ -115,8 +120,11 @@ export default async function ProfilePage() {
                 </p>
                 <p className="mt-2 inline-flex items-center gap-1 text-[11.5px] text-muted">
                   <CalendarDays className="size-3" />{" "}
-                  {formatDate(stay.guest.checkInDate)} →{" "}
-                  {formatDate(stay.guest.checkOutDate)}
+                  {stay.isPlanning
+                    ? "No reservation linked · planning mode"
+                    : `${formatDate(stay.guest.checkInDate)} → ${formatDate(
+                        stay.guest.checkOutDate,
+                      )}`}
                 </p>
                 <Link
                   href="/stay"

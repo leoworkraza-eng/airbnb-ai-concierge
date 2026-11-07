@@ -165,6 +165,7 @@ function mapGuestSession(row: Row): GuestSession {
       consent: prefs.consent === true,
       updatedAt: nullableStr(prefs.updatedAt) ?? undefined,
       affiliation: mapAffiliation(prefs.affiliation),
+      planningGuestUserId: nullableStr(prefs.planningGuestUserId) ?? undefined,
     },
     createdAt: str(row.created_at),
   };

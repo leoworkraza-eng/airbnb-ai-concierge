@@ -45,7 +45,10 @@ export const getHostWorkspace = cache(async (): Promise<HostWorkspace> => {
     repo.listConversations(propertyIds).catch(() => []),
     repo.listGuestSessions(propertyIds).catch(() => []),
   ]);
-  const guests = allGuests.filter((guest) => !isAffiliationSession(guest));
+  const guests = allGuests.filter(
+    (guest) =>
+      !isAffiliationSession(guest) && !guest.preferences.planningGuestUserId,
+  );
 
   return {
     session,

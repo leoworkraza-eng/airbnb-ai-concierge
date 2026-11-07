@@ -20,7 +20,7 @@ export default async function ItineraryPage() {
     redirect(account ? "/stay" : "/guest/login?next=/itinerary");
   }
 
-  const { guest, property } = context;
+  const { guest, property, isPlanning } = context;
   const repo = await getGuestRepo();
 
   // The rest of the app keeps working before the itinerary migration runs.
@@ -41,7 +41,13 @@ export default async function ItineraryPage() {
   );
 
   return (
-    <GuestShell propertyName={property.name} active="itinerary" guestName={guest.guestName}>
+    <GuestShell
+      propertyName={property.name}
+      active="itinerary"
+      guestName={guest.guestName}
+      planning={isPlanning}
+      hasStay={!isPlanning}
+    >
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="eyebrow">Your plan</p>
