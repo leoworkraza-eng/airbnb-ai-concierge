@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif } from "next/font/google";
+import { Bricolage_Grotesque, Inter, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -13,6 +13,12 @@ const instrument = Instrument_Serif({
   weight: "400",
   style: ["normal", "italic"],
   variable: "--font-instrument",
+  display: "swap",
+});
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-bricolage",
   display: "swap",
 });
 
@@ -36,7 +42,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${instrument.variable}`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${instrument.variable} ${bricolage.variable}`}
+    >
       <body className="font-sans antialiased">{children}</body>
     </html>
   );

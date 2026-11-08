@@ -15,6 +15,7 @@
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-display: var(--font-instrument), "Iowan Old Style", Georgia, serif;
+  --font-hero: var(--font-bricolage), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
   --radius-card: 22px;
 }
@@ -192,6 +193,123 @@
   animation: hero-push 38s ease-in-out infinite alternate;
   will-change: transform;
   backface-visibility: hidden;
+}
+
+/* Home hero -------------------------------------------------------------- */
+@keyframes hero-word-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.5em, 0);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+.hero-word {
+  display: inline-block;
+  animation: hero-word-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes hero-underline-in {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.hero-underline {
+  transform-origin: left;
+  animation: hero-underline-in 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.7s both;
+}
+
+.hero-fade {
+  animation: page-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes hero-aurora-a {
+  from {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(5%, 4%, 0) scale(1.12);
+  }
+}
+
+@keyframes hero-aurora-b {
+  from {
+    transform: translate3d(2%, 3%, 0) scale(1.05);
+  }
+  to {
+    transform: translate3d(-5%, -4%, 0) scale(1);
+  }
+}
+
+.hero-aurora {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 9999px;
+}
+
+.hero-aurora-a {
+  top: -18rem;
+  right: -10rem;
+  width: 44rem;
+  height: 44rem;
+  background: radial-gradient(
+    circle at 40% 40%,
+    rgba(226, 43, 79, 0.16),
+    rgba(244, 228, 206, 0.5) 44%,
+    rgba(244, 228, 206, 0) 70%
+  );
+  animation: hero-aurora-a 22s ease-in-out infinite alternate;
+}
+
+.hero-aurora-b {
+  bottom: -18rem;
+  left: -10rem;
+  width: 34rem;
+  height: 34rem;
+  background: radial-gradient(
+    circle,
+    rgba(169, 133, 91, 0.22),
+    rgba(169, 133, 91, 0) 65%
+  );
+  animation: hero-aurora-b 28s ease-in-out infinite alternate;
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    linear-gradient(to right, rgba(25, 19, 16, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(25, 19, 16, 0.045) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent 78%);
+}
+
+@keyframes soft-float {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -7px, 0);
+  }
+}
+
+.float-slow {
+  animation: soft-float 7s ease-in-out infinite alternate;
 }
 
 /* Page-level entrance used by the guest shell. */
@@ -382,5 +500,16 @@
   .hero-scene-media {
     animation: none;
     transform: scale(1.015);
+  }
+
+  .hero-word,
+  .hero-fade,
+  .hero-underline,
+  .hero-aurora,
+  .float-slow {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
   }
 }

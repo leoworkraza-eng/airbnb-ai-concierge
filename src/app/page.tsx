@@ -6,12 +6,14 @@ import {
   KeyRound,
   MapPin,
   MessageSquare,
+  ShieldCheck,
   Sparkles,
   Sun,
   UsersRound,
   Webhook,
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { ConciergeAvatar } from "@/components/brand";
 import { Disclaimer } from "@/components/guest/GuestShell";
 import { Card, Pill } from "@/components/ui";
 import { getGuestAccount } from "@/lib/guest-account";
@@ -65,77 +67,172 @@ export default async function LandingPage() {
       </a>
       <SiteHeader />
       <main id="main-content">
-        <section className="relative overflow-hidden border-b border-line">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -top-40 right-[-12%] size-[540px] rounded-full bg-[radial-gradient(circle,#F4E4CE_0%,rgba(244,228,206,0)_70%)]"
-          />
-          <div className="container-page relative py-14 sm:py-20">
-            <div className="max-w-2xl">
-              <Pill tone="brand">
-                <Sparkles className="size-3" /> Independent prototype
-              </Pill>
-              <h1 className="mt-5 font-display text-[40px] leading-[1.02] tracking-tight sm:text-[58px]">
-                Find a host.
-                <br />
-                Ask to connect.
-              </h1>
-              <p className="mt-4 max-w-xl text-[14px] leading-relaxed text-ink-soft">
-                Hosts offer a place, an activity or a service. Guests browse, choose
-                and send one simple request. No booking required to join.
-              </p>
+        <section className="relative isolate overflow-hidden border-b border-line">
+          <div aria-hidden="true" className="hero-aurora hero-aurora-a" />
+          <div aria-hidden="true" className="hero-aurora hero-aurora-b" />
+          <div aria-hidden="true" className="hero-grid" />
 
-              <div className="mt-7 flex flex-wrap gap-2.5">
-                {hasGuestAccess ? (
-                  <>
-                    <Link href="/hosts" className="btn-primary h-11 px-5">
-                      Browse hosts <ArrowRight className="size-4" />
+          <div className="container-page relative z-10 py-14 sm:py-20 lg:py-24">
+            <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
+              <div className="max-w-2xl">
+                <Pill tone="brand">
+                  <span className="size-1.5 animate-pulse rounded-full bg-brand" />
+                  Independent prototype
+                </Pill>
+                <h1 className="mt-5 font-hero text-[46px] leading-[0.92] tracking-[-0.045em] sm:text-[68px] lg:text-[76px]">
+                  <span className="block">
+                    <span className="hero-word">Find a host.</span>
+                  </span>
+                  <span className="mt-1 block">
+                    <span
+                      className="hero-word"
+                      style={{ animationDelay: "140ms" }}
+                    >
+                      Ask to
+                    </span>{" "}
+                    <span
+                      className="hero-word relative text-brand"
+                      style={{ animationDelay: "250ms" }}
+                    >
+                      connect.
+                      <span
+                        aria-hidden="true"
+                        className="hero-underline absolute -bottom-1 left-0 h-[3px] w-full rounded-full bg-gradient-to-r from-brand via-[#f08a5d] to-gold"
+                      />
+                    </span>
+                  </span>
+                </h1>
+                <p
+                  className="hero-fade mt-5 max-w-xl text-[14px] leading-relaxed text-ink-soft sm:text-[15px]"
+                  style={{ animationDelay: "400ms" }}
+                >
+                  Hosts offer a place, an activity or a service. Guests browse, choose
+                  and send one simple request. No booking required to join.
+                </p>
+
+                <div
+                  className="hero-fade mt-7 flex flex-wrap gap-2.5"
+                  style={{ animationDelay: "500ms" }}
+                >
+                  {hasGuestAccess ? (
+                    <>
+                      <Link href="/hosts" className="btn-primary h-11 px-5">
+                        Browse hosts <ArrowRight className="size-4" />
+                      </Link>
+                      <Link href="/stay" className="btn-secondary h-11 px-5">
+                        My stay
+                      </Link>
+                      <Link href="/connections" className="btn-secondary h-11 px-5">
+                        Connections
+                      </Link>
+                      <Link href="/concierge" className="btn-secondary h-11 px-5">
+                        Concierge
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/guest/signup" className="btn-primary h-11 px-5">
+                        Create a guest account <ArrowRight className="size-4" />
+                      </Link>
+                      <Link href="/guest/login" className="btn-secondary h-11 px-5">
+                        Guest sign in
+                      </Link>
+                    </>
+                  )}
+                  {host ? (
+                    <Link href="/host" className="btn-secondary h-11 px-5">
+                      Host dashboard
                     </Link>
-                    <Link href="/stay" className="btn-secondary h-11 px-5">
-                      My stay
+                  ) : (
+                    <Link href="/host/signup" className="btn-secondary h-11 px-5">
+                      Become a host
                     </Link>
-                    <Link href="/connections" className="btn-secondary h-11 px-5">
-                      Connections
-                    </Link>
-                    <Link href="/concierge" className="btn-secondary h-11 px-5">
-                      Concierge
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/guest/signup" className="btn-primary h-11 px-5">
-                      Create a guest account <ArrowRight className="size-4" />
-                    </Link>
-                    <Link href="/guest/login" className="btn-secondary h-11 px-5">
-                      Guest sign in
-                    </Link>
-                  </>
-                )}
-                {host ? (
-                  <Link href="/host" className="btn-secondary h-11 px-5">
-                    Host dashboard
-                  </Link>
-                ) : (
-                  <Link href="/host/signup" className="btn-secondary h-11 px-5">
-                    Become a host
-                  </Link>
-                )}
+                  )}
+                </div>
+
+                <p
+                  className="hero-fade mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-muted"
+                  style={{ animationDelay: "600ms" }}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    <KeyRound className="size-3" /> Guest accounts are independent
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="size-3" /> Browse more than one host
+                  </span>
+                </p>
               </div>
 
-              <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-muted">
-                <span className="inline-flex items-center gap-1">
-                  <KeyRound className="size-3" /> Guest accounts are independent
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="size-3" /> Browse more than one host
-                </span>
-              </p>
+              <div
+                className="hero-fade relative mx-auto w-full max-w-md lg:max-w-none"
+                style={{ animationDelay: "620ms" }}
+              >
+                <div
+                  aria-hidden="true"
+                  className="absolute -inset-4 -z-10 rounded-[36px] bg-gradient-to-br from-brand/15 via-transparent to-gold/25 blur-2xl"
+                />
+
+                <div className="surface surface-shadow relative overflow-hidden rounded-[28px]">
+                  <div className="flex items-center justify-between gap-3 border-b border-line bg-white px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <ConciergeAvatar size="md" className="avatar-breathe" />
+                      <div>
+                        <p className="text-[13px] leading-tight font-semibold">
+                          Concierge
+                        </p>
+                        <p className="mt-0.5 text-[10.5px] text-muted">
+                          Casa Barcelona · Eixample
+                        </p>
+                      </div>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[9.5px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                      <span className="size-1.5 rounded-full bg-emerald-500" />
+                      Verified
+                    </span>
+                  </div>
+
+                  <div className="space-y-3.5 bg-[linear-gradient(180deg,#FFFDFB_0%,#FAF7F3_100%)] px-5 py-5">
+                    <div className="ml-auto max-w-[84%] rounded-2xl rounded-br-md bg-ink px-3.5 py-2.5 text-[12px] leading-relaxed text-cream">
+                      What&rsquo;s the Wi-Fi password?
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <ConciergeAvatar size="sm" />
+                      <div className="rounded-2xl rounded-tl-md border border-line bg-white px-3.5 py-2.5 text-[12px] leading-relaxed text-ink-soft">
+                        <span className="font-medium text-ink">
+                          CasaBarcelona_Guest
+                        </span>
+                        <span className="text-muted"> · </span>
+                        <span className="font-mono text-[11px]">
+                          Barcelona2026Demo
+                        </span>
+                        <span className="mt-1.5 flex items-center gap-1 text-[10px] text-emerald-700">
+                          <Check className="size-3" /> From the host&rsquo;s record
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 border-t border-line bg-white px-5 py-3 text-[10.5px] text-muted">
+                    <ShieldCheck className="size-3.5 text-emerald-600" />
+                    Verified answers · real maintenance tickets
+                  </div>
+                </div>
+
+                <div className="float-slow absolute -bottom-5 -left-4 hidden rounded-2xl border border-line bg-white px-4 py-3 shadow-[0_18px_40px_-24px_rgba(25,19,16,0.5)] sm:block">
+                  <p className="text-[9px] tracking-[0.16em] text-muted uppercase">
+                    Tonight
+                  </p>
+                  <p className="mt-0.5 text-[12px] font-medium">
+                    3 stops near Eixample
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         <section className="container-page py-12 sm:py-16">
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="stagger grid gap-3 md:grid-cols-3">
             {[
               {
                 step: "01",
@@ -218,7 +315,7 @@ export default async function LandingPage() {
             </div>
             <Pill tone="neutral">Easy to extend</Pill>
           </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="stagger mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {products.map((product) => (
               <Card key={product.name} className="p-4">
                 <span className="grid size-9 place-items-center rounded-xl bg-sand text-ink-soft">
