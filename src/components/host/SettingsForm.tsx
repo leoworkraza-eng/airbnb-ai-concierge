@@ -151,7 +151,7 @@ export function SettingsForm({ property }: { property: Property }) {
                   },
                 }),
               });
-              const data = (await response.json()) as { error?: string };
+              const data = (await response.json().catch(() => ({}))) as { error?: string };
               if (!response.ok) throw new Error(data.error ?? "Could not save settings.");
               setSaved(true);
               router.refresh();

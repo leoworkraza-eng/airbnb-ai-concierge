@@ -192,7 +192,7 @@ export function PropertyForm({ property }: { property?: Property }) {
           body: JSON.stringify(payload),
         },
       );
-      const data = (await response.json()) as { error?: string; property?: Property };
+      const data = (await response.json().catch(() => ({}))) as { error?: string; property?: Property };
       if (!response.ok) throw new Error(data.error ?? "The changes could not be saved.");
 
       setSaved(true);

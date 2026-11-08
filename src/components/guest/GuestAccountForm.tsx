@@ -21,7 +21,7 @@ export function GuestAccountForm({ next }: { next?: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = (await response.json()) as { error?: string; redirect?: string };
+      const data = (await response.json().catch(() => ({}))) as { error?: string; redirect?: string };
       if (!response.ok) {
         throw new Error(data.error ?? "That email and password didn't work.");
       }
@@ -29,9 +29,8 @@ export function GuestAccountForm({ next }: { next?: string }) {
       const destination =
         next && next.startsWith("/") && !next.startsWith("//")
           ? next
-          : (data.redirect ?? "/hosts");
+          : (data.redirect ?? "/welcome");
       router.replace(destination);
-      router.refresh();
     } catch (caught) {
       setError(
         caught instanceof Error

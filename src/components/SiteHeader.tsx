@@ -1,18 +1,24 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand";
-import { getHostSession } from "@/lib/auth";
+import { getGuestSessionId, getHostSession } from "@/lib/auth";
 import { getGuestAccount } from "@/lib/guest-account";
-import { getGuestContext } from "@/lib/guest-context";
 
 export async function SiteHeader() {
-  const [account, stay, host] = await Promise.all([
+  const [account, guestSessionId, host] = await Promise.all([
     getGuestAccount(),
-    getGuestContext(),
+    getGuestSessionId(),
     getHostSession(),
   ]);
+  const hasDemoStay = Boolean(guestSessionId);
 
   return (
     <header className="sticky top-0 z-30 border-b border-line/70 bg-cream/90 backdrop-blur-xl">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-[13px] focus:text-cream"
+      >
+        Skip to content
+      </a>
       <div className="container-page flex h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Logo />
@@ -27,7 +33,7 @@ export async function SiteHeader() {
           </nav>
         </div>
         <div className="flex items-center gap-3 text-[12px]">
-          {account || stay ? (
+          {account || hasDemoStay ? (
             <>
               <Link href="/stay" className="hidden text-muted hover:text-ink sm:inline">
                 My stay

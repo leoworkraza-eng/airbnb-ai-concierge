@@ -15,8 +15,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { Disclaimer } from "@/components/guest/GuestShell";
 import { Card, Pill } from "@/components/ui";
 import { getGuestAccount } from "@/lib/guest-account";
-import { getGuestContext } from "@/lib/guest-context";
-import { getHostSession } from "@/lib/auth";
+import { getGuestSessionId, getHostSession } from "@/lib/auth";
 
 export const metadata = {
   title: "Concierge — hosts, guests and a simpler connection",
@@ -49,16 +48,23 @@ const products = [
 ];
 
 export default async function LandingPage() {
-  const [account, stay, host] = await Promise.all([
+  const [account, guestSessionId, host] = await Promise.all([
     getGuestAccount(),
-    getGuestContext(),
+    getGuestSessionId(),
     getHostSession(),
   ]);
+  const hasGuestAccess = Boolean(account || guestSessionId);
 
   return (
     <div className="min-h-screen bg-cream">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-[13px] focus:text-cream"
+      >
+        Skip to content
+      </a>
       <SiteHeader />
-      <main>
+      <main id="main-content">
         <section className="relative overflow-hidden border-b border-line">
           <div
             aria-hidden="true"
@@ -80,7 +86,7 @@ export default async function LandingPage() {
               </p>
 
               <div className="mt-7 flex flex-wrap gap-2.5">
-                {account || stay ? (
+                {hasGuestAccess ? (
                   <>
                     <Link href="/hosts" className="btn-primary h-11 px-5">
                       Browse hosts <ArrowRight className="size-4" />
@@ -238,10 +244,10 @@ export default async function LandingPage() {
               Hosts
             </Link>
             <Link
-              href={account ? "/profile" : stay ? "/stay" : "/guest/signup"}
+              href={account ? "/profile" : guestSessionId ? "/stay" : "/guest/signup"}
               className="text-muted hover:text-ink"
             >
-              {account ? "My account" : stay ? "My stay" : "Guest account"}
+              {account ? "My account" : guestSessionId ? "My stay" : "Guest account"}
             </Link>
             <Link
               href={host ? "/host" : "/host/login"}

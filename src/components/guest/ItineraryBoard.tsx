@@ -38,6 +38,7 @@ export function ItineraryBoard({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ day: number; slot: ItinerarySlot } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"build" | "clear" | null>(null);
   const [title, setTitle] = useState("");
   const [placeId, setPlaceId] = useState("");
 
@@ -51,7 +52,7 @@ export function ItineraryBoard({
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const data = (await response.json()) as { items?: ItineraryItem[]; error?: string };
+    const data = (await response.json().catch(() => ({}))) as { items?: ItineraryItem[]; error?: string };
     if (!response.ok) throw new Error(data.error ?? "That didn't save. Please try again.");
     if (data.items) setItems(data.items);
   }
@@ -69,22 +70,9 @@ export function ItineraryBoard({
     }
   }
 
-  const build = () =>
-    run("build", async () => {
-      if (
-        items.length &&
-        !window.confirm("Rebuild the plan? Your current stops will be replaced.")
-      ) {
-        return;
-      }
-      await request("POST", { action: "build" });
-    });
+  const build = () => run("build", () => request("POST", { action: "build" }));
 
-  const clear = () =>
-    run("clear", async () => {
-      if (!window.confirm("Remove every stop from your plan?")) return;
-      await request("DELETE", undefined, "?all=1");
-    });
+  const clear = () => run("clear", () => request("DELETE", undefined, "?all=1"));
 
   const toggle = (item: ItineraryItem) =>
     run(`toggle:${item.id}`, () => request("PATCH", { id: item.id, done: !item.done }));
@@ -139,7 +127,7 @@ export function ItineraryBoard({
           {items.length ? (
             <button
               type="button"
-              onClick={() => void clear()}
+              onClick={() => setConfirmAction("clear")}
               disabled={locked || busy !== null}
               className="btn btn-secondary btn-sm"
             >
@@ -150,13 +138,15 @@ export function ItineraryBoard({
               )}
               Clear
             </button>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => void build()}
-            disabled={locked || busy !== null}
-            className="btn btn-primary btn-sm"
-          >
+          ) : null}            <button
+              type="button"
+              onClick={() => {
+                if (items.length) setConfirmAction("build");
+                else void build();
+              }}
+              disabled={locked || busy !== null}
+              className="btn btn-primary btn-sm"
+            >
             {busy === "build" ? (
               <Loader2 className="size-3.5 animate-spin" />
             ) : (
@@ -168,6 +158,51 @@ export function ItineraryBoard({
       </div>
 
       {error ? <Note tone="danger">{error}</Note> : null}
+
+      {confirmAction ? (
+        <div
+          role="alertdialog"
+          aria-labelledby="plan-confirm-title"
+          className="surface flex flex-wrap items-center justify-between gap-3 border-amber-200 bg-amber-50 px-4 py-3"
+        >
+          <div>
+            <p
+              id="plan-confirm-title"
+              className="text-[13px] font-semibold text-amber-900"
+            >
+              {confirmAction === "build"
+                ? "Rebuild the plan?"
+                : "Remove every stop?"}
+            </p>
+            <p className="mt-0.5 text-[11.5px] leading-relaxed text-amber-800">
+              {confirmAction === "build"
+                ? "The current stops will be replaced with a fresh three-a-day plan."
+                : "Your plan will be empty. You can build it again at any time."}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmAction(null)}
+              className="btn btn-secondary btn-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const action = confirmAction;
+                setConfirmAction(null);
+                if (action === "build") void build();
+                else void clear();
+              }}
+              className="btn btn-primary btn-sm"
+            >
+              {confirmAction === "build" ? "Rebuild" : "Clear plan"}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {items.length === 0 && !migration ? (
         <div className="rounded-[22px] border border-dashed border-line bg-white/70 px-6 py-10 text-center">

@@ -38,8 +38,8 @@ export function GuestAuthShell({
             Find a host. Ask to connect. Keep it simple.
           </h2>
           <p className="mt-4 text-[13.5px] leading-relaxed text-white/55">
-            A guest account lets you browse local hosts and track the connection
-            you request. Your stay is optional.
+            A guest account opens the host directory, a Barcelona guide, a
+            day-by-day plan and the concierge. A booking is optional.
           </p>
           <div className="mt-7 flex items-center gap-3 rounded-2xl border border-white/12 bg-white/6 px-4 py-3">
             <ShieldCheck className="size-4 shrink-0 text-brand" />

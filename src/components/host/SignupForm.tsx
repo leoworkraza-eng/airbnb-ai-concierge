@@ -69,11 +69,10 @@ export function SignupForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const data = (await response.json()) as { error?: string };
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) throw new Error(data.error ?? "The account could not be created.");
 
       router.replace("/host");
-      router.refresh();
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : "The account could not be created.",

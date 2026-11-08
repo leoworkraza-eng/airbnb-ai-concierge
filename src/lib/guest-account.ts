@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getGuestRepo } from "./data";
 import { createSupabaseAdminClient } from "./data/supabase";
 import { isSupabaseConfigured } from "./env";
@@ -119,7 +120,7 @@ export async function signInGuestAccount(
 }
 
 /** The signed-in Supabase user, only when it is a guest account. */
-export async function getGuestAccount(): Promise<GuestAccount | null> {
+export const getGuestAccount = cache(async (): Promise<GuestAccount | null> => {
   if (!isSupabaseConfigured) return null;
 
   try {
@@ -138,7 +139,7 @@ export async function getGuestAccount(): Promise<GuestAccount | null> {
   } catch {
     return null;
   }
-}
+});
 
 /** Clear a guest account session without touching a host session. */
 export async function signOutGuestAccount() {

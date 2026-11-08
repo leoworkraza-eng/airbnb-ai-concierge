@@ -22,7 +22,7 @@ export function SummaryButton({ conversationId }: { conversationId: string }) {
               `/api/host/conversations/${conversationId}/summary`,
               { method: "POST" },
             );
-            const data = (await response.json()) as { error?: string };
+            const data = (await response.json().catch(() => ({}))) as { error?: string };
             if (!response.ok) throw new Error(data.error ?? "Summary failed.");
             router.refresh();
           } catch (caught) {

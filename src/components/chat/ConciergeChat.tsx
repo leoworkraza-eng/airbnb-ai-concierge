@@ -62,11 +62,16 @@ export function ConciergeChat({
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  const didInitialScroll = useRef(false);
+
   useEffect(() => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({
+      top: el.scrollHeight,
+      behavior: didInitialScroll.current ? "smooth" : "auto",
     });
+    didInitialScroll.current = true;
   }, [messages, sending]);
 
   async function send(text: string) {
@@ -87,14 +92,18 @@ export function ConciergeChat({
     };
     setMessages((current) => [...current, optimistic]);
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 75_000);
+
     try {
       const response = await fetch("/api/concierge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmed }),
+        signal: controller.signal,
       });
 
-      const data = (await response.json()) as {
+      const data = (await response.json().catch(() => ({}))) as {
         reply?: { id: string; content: string; toolEvents: ToolEvent[]; createdAt: string };
         ticket?: TicketSummary;
         notice?: string | null;
@@ -125,12 +134,16 @@ export function ConciergeChat({
     } catch (caught) {
       setMessages((current) => current.filter((message) => message.id !== optimistic.id));
       setInput(trimmed);
+      const aborted = caught instanceof Error && caught.name === "AbortError";
       setError(
-        caught instanceof Error
-          ? caught.message
-          : "The concierge is unavailable right now.",
+        aborted
+          ? "That answer took too long. Your message is back in the box — try again."
+          : caught instanceof Error
+            ? caught.message
+            : "The concierge is unavailable right now.",
       );
     } finally {
+      clearTimeout(timeout);
       setSending(false);
       inputRef.current?.focus();
     }
@@ -172,7 +185,9 @@ export function ConciergeChat({
       <div
         ref={scrollRef}
         className="flex-1 space-y-5 overflow-y-auto bg-[linear-gradient(180deg,#FFFDFB_0%,#FAF7F3_100%)] px-4 py-5 sm:px-6"
+        role="log"
         aria-live="polite"
+        aria-busy={sending}
       >
         {messages.length === 0 ? (
           <div className="bubble-in flex items-start gap-3">
@@ -300,7 +315,8 @@ export function ConciergeChat({
                   key={suggestion}
                   type="button"
                   onClick={() => send(suggestion)}
-                  className="rounded-full border border-line bg-white px-3 py-1.5 text-left text-[12px] text-ink-soft transition hover:border-ink/25 hover:bg-sand/40"
+                  disabled={sending}
+                  className="rounded-full border border-line bg-white px-3 py-1.5 text-left text-[12px] text-ink-soft transition hover:border-ink/25 hover:bg-sand/40 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {suggestion}
                 </button>

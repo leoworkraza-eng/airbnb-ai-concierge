@@ -1,5 +1,5 @@
-import { GuestPageSkeleton } from "@/components/skeletons";
+import { GuestShellSkeleton } from "@/components/skeletons";
 
 export default function Loading() {
-  return <GuestPageSkeleton />;
+  return <GuestShellSkeleton />;
 }

@@ -68,7 +68,7 @@ export function RequestForm({ hostName }: { hostName: string }) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ description, category, urgent }),
           });
-          const data = (await response.json()) as {
+          const data = (await response.json().catch(() => ({}))) as {
             ticket?: { code: string; priorityLabel: string };
             error?: string;
           };

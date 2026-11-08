@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { GuestAccount, GuestSession, Property } from "./types";
 import { getGuestRepo } from "./data";
 import { getGuestSessionId } from "./auth";
@@ -83,14 +84,14 @@ async function resolveContext(): Promise<GuestContext | null> {
   return { guest, property, account, isPlanning: true };
 }
 
-export async function getGuestContext(): Promise<GuestContext | null> {
+export const getGuestContext = cache(async (): Promise<GuestContext | null> => {
   try {
     return await resolveContext();
   } catch (error) {
     console.error("[guest] Could not resolve the guest workspace", error);
     return null;
   }
-}
+});
 
 export function greeting(name: string) {
   const hour = Number(

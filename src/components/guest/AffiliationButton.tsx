@@ -64,7 +64,7 @@ export function AffiliationButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ hostId, propertyId, reservationId: reservationId ?? null }),
       });
-      const data = (await response.json()) as {
+      const data = (await response.json().catch(() => ({}))) as {
         error?: string;
         affiliation?: { status: AffiliationStatus };
       };

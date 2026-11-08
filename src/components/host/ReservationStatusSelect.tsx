@@ -32,7 +32,7 @@ export function ReservationStatusSelect({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: next }),
       });
-      const data = (await response.json()) as { error?: string };
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) throw new Error(data.error ?? "Could not update the status.");
       router.refresh();
     } catch (caught) {

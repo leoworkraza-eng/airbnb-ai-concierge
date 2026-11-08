@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createGuestCookie } from "@/lib/auth";
+import { clearGuestCookie, createGuestCookie } from "@/lib/auth";
 import { getGuestRepo } from "@/lib/data";
 import { MigrationRequiredError } from "@/lib/data/repo";
 import { signUpGuestAccount } from "@/lib/guest-account";
@@ -37,6 +37,10 @@ export async function POST(request: Request) {
         { status: result.status ?? 400 },
       );
     }
+
+    // A demo stay cookie may still be around from an earlier visit. The real
+    // account must win, so clear it before linking any booking cookie.
+    await clearGuestCookie();
 
     if (result.booking) {
       const repo = await getGuestRepo();

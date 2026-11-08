@@ -15,14 +15,14 @@ export default async function GuestSignupPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const account = await getGuestAccount();
-  if (account) redirect("/hosts");
+  if (account) redirect("/welcome");
   const { next } = await searchParams;
 
   return (
     <GuestAuthShell
       eyebrow="New guest"
       title="Create your guest account"
-      description="Any email works. If it matches a booking, we link the stay automatically. If not, you can browse hosts and ask to connect."
+      description="Any email works. If it matches a booking, we link the stay automatically. If not, your guest area is ready straight away — no reservation needed."
       backHref="/"
       backLabel="Back to the home page"
       footer={

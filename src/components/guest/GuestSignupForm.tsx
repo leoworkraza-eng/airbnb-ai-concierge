@@ -28,7 +28,7 @@ export function GuestSignupForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fullName, email, password }),
       });
-      const data = (await response.json()) as { error?: string; redirect?: string };
+      const data = (await response.json().catch(() => ({}))) as { error?: string; redirect?: string };
       if (!response.ok) {
         throw new Error(data.error ?? "The guest account could not be created.");
       }
@@ -38,7 +38,6 @@ export function GuestSignupForm({
           ? next
           : (data.redirect ?? "/welcome");
       router.replace(destination);
-      router.refresh();
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -85,8 +84,8 @@ export function GuestSignupForm({
           placeholder="you@example.com"
         />
         <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
-          Any valid email works. If it matches a booking, we link the stay. You can
-          also join with no booking and browse hosts.
+          Any valid email works. If it matches a booking, we link the stay. With no
+          booking, your guide, plan and concierge are still available.
         </p>
       </div>
 

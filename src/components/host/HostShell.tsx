@@ -18,6 +18,12 @@ export function HostShell({
 }) {
   return (
     <div className="min-h-screen bg-cream">
+      <a
+        href="#host-main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-[13px] focus:text-cream"
+      >
+        Skip to content
+      </a>
       <header className="border-b border-line bg-white/70">
         <div className="container-page flex h-16 items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -55,7 +61,9 @@ export function HostShell({
           </div>
         </aside>
 
-        <main className="min-w-0">{children}</main>
+        <main id="host-main" className="min-w-0">
+          {children}
+        </main>
       </div>
 
       <footer className="border-t border-line bg-white/60">

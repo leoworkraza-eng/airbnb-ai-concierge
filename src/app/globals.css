@@ -207,7 +207,7 @@
 }
 
 .page-enter {
-  animation: page-enter 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: page-enter 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Staggered card entrances, used by the host dashboard grids. */
@@ -244,7 +244,7 @@
 }
 
 .bubble-in {
-  animation: bubble-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: bubble-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes avatar-breathe {

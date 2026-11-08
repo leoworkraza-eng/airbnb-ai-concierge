@@ -16,7 +16,7 @@ export default async function GuestLoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const account = await getGuestAccount();
-  if (account) redirect("/hosts");
+  if (account) redirect("/welcome");
   const { next } = await searchParams;
 
   const demoStay = await getGuestContext();
@@ -24,8 +24,8 @@ export default async function GuestLoginPage({
   return (
     <GuestAuthShell
       eyebrow="Guest account"
-      title="Sign in to browse hosts"
-      description="Use the email and password you chose. New here? Create an account in a minute."
+      title="Sign in to your guest area"
+      description="Use the email and password you chose. A booking is optional; your guide, plan and concierge are waiting."
       backHref="/"
       backLabel="Back to the home page"
       footer={

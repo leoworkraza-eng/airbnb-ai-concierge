@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { NavLink } from "@/components/nav-link";
 import {
   Building2,
   CalendarDays,
@@ -30,12 +30,12 @@ export function HostNav({ unread }: { unread: number }) {
           ? pathname === item.href
           : pathname.startsWith(item.href);
         return (
-          <Link
+          <NavLink
             key={item.href}
             href={item.href}
-            aria-current={active ? "page" : undefined}
+            current={active}
             className={cn(
-              "flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-[13.5px] font-medium transition",
+              "relative flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-[13.5px] font-medium transition",
               active
                 ? "bg-ink text-cream"
                 : "text-ink-soft hover:bg-sand hover:text-ink",
@@ -53,7 +53,7 @@ export function HostNav({ unread }: { unread: number }) {
                 {unread}
               </span>
             ) : null}
-          </Link>
+          </NavLink>
         );
       })}
       <form action="/api/host/logout" method="post" className="mt-1 lg:mt-auto">

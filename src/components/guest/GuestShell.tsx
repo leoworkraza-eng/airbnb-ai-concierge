@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { NavLink } from "@/components/nav-link";
 import {
   CalendarRange,
   Compass,
@@ -84,6 +85,12 @@ export function GuestShell({
   const tabs = withTools ? stayTabs : noStayTabs;
   return (
     <div className="flex min-h-screen flex-col bg-cream">
+      <a
+        href="#guest-main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-[13px] focus:text-cream"
+      >
+        Skip to content
+      </a>
       <header className="sticky top-0 z-30 border-b border-line/70 bg-cream/85 backdrop-blur-xl">
         <div className="container-page flex h-16 items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
@@ -114,10 +121,10 @@ export function GuestShell({
             {tabs.map((tab) => {
               const current = active === tab.id;
               return (
-                <Link
+                <NavLink
                   key={tab.id}
                   href={tab.href}
-                  aria-current={current ? "page" : undefined}
+                  current={current}
                   className={linkClass(current)}
                 >
                   <tab.icon
@@ -128,7 +135,7 @@ export function GuestShell({
                     strokeWidth={1.9}
                   />
                   {tab.label}
-                </Link>
+                </NavLink>
               );
             })}
           </div>
@@ -141,12 +148,12 @@ export function GuestShell({
                 {stayTools.map((tab) => {
                   const current = active === tab.id;
                   return (
-                    <Link
+                    <NavLink
                       key={tab.id}
                       href={tab.href}
-                      aria-current={current ? "page" : undefined}
+                      current={current}
                       className={cn(
-                        "inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] transition",
+                        "relative inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] transition",
                         current
                           ? "bg-sand text-ink"
                           : "text-muted hover:bg-sand/70 hover:text-ink",
@@ -154,7 +161,7 @@ export function GuestShell({
                     >
                       <tab.icon className="size-3" />
                       {tab.label}
-                    </Link>
+                    </NavLink>
                   );
                 })}
               </div>
@@ -163,7 +170,7 @@ export function GuestShell({
         </nav>
       </header>
 
-      <main className="container-page flex-1 py-6 sm:py-9">
+      <main id="guest-main" className="container-page flex-1 py-6 sm:py-9">
         <div className="page-enter">{children}</div>
       </main>
 

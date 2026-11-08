@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { env, isSupabaseConfigured } from "./env";
@@ -74,7 +75,7 @@ export async function clearGuestCookie() {
   store.delete(GUEST_COOKIE);
 }
 
-export async function getHostSession(): Promise<HostSession | null> {
+export const getHostSession = cache(async (): Promise<HostSession | null> => {
   if (isSupabaseConfigured) {
     const supabase = await createSupabaseServerClient();
     const { data } = await supabase.auth.getUser();
@@ -105,7 +106,7 @@ export async function getHostSession(): Promise<HostSession | null> {
   const payload = verify<HostSession>(await readCookie(HOST_COOKIE));
   if (!payload || !payload.hostId) return null;
   return { ...payload, mode: "local" };
-}
+});
 
 export async function requireHostSession(): Promise<HostSession> {
   const session = await getHostSession();

@@ -48,7 +48,7 @@ export function AirbnbConnectionForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = (await response.json()) as { error?: string };
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
         setMessage({ tone: "error", text: data.error ?? "The request failed." });
         router.refresh();

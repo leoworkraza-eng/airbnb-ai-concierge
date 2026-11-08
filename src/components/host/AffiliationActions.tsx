@@ -19,7 +19,7 @@ export function AffiliationActions({ id }: { id: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      const data = (await response.json()) as { error?: string };
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) throw new Error(data.error ?? "That request could not be updated.");
       router.refresh();
     } catch (caught) {

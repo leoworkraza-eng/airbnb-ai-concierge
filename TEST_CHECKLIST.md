@@ -1,6 +1,6 @@
 # Test checklist
 
-Verified on 7 November 2026 against fresh production builds (`next build` + `next start`).
+Verified on 8 November 2026 against fresh production builds (`next build` + `next start`).
 
 **Production:** <https://airbnb-ai-concierge-zeta.vercel.app> — deployed 7 November 2026.
 
@@ -11,6 +11,7 @@ Verified on 7 November 2026 against fresh production builds (`next build` + `nex
 - **68/68 unique internal links resolved**
 - **`npm run build` passed**, including TypeScript checking
 - **31/31 planning-mode checks passed:** signup redirects to `/welcome`, all six guest workspace pages return 200, one planning session is reused, and QA data is removed
+- **Interaction polish passed:** guest signup with a stale demo cookie resolves the real account, the concierge answered a live Wi-Fi question, the host dashboard rendered with no horizontal overflow, and the browser console showed no runtime errors
 - **Live production checks passed:** `/`, `/hosts`, `/guest/signup` and `/host/login` returned 200; the spaced-email API request returned 400
 - QA accounts and their offerings, reservations, affiliations and support tickets were removed after the run
 
@@ -26,6 +27,10 @@ Verified on 7 November 2026 against fresh production builds (`next build` + `nex
 | Returning guest with no booking | PASS | Sign-in succeeds and routes to `/welcome` in planning mode |
 | Signed-in “My stay” with no booking | PASS | Shows planning mode on the demo base with a route to find a host, not a dead end |
 | Guest without a stay opens `/welcome` | PASS | Planning workspace renders; `/concierge`, `/explore`, `/support` and `/itinerary` all return 200 |
+| Guest route loads | PASS | Shell-aware skeleton keeps the header and tabs stable; no layout jump or blank screen |
+| Guest signs up after opening a demo | PASS | Demo cookie is cleared; `/welcome` shows the new account and planning mode, not the demo guest |
+| Page fails mid-render | PASS | Branded error boundary offers “Try again” plus guest area and home exits |
+| Concierge takes too long | PASS | Request aborts after 75s, the message returns to the input with a clear retry message |
 | Logged-out protected pages | PASS | `/profile` and `/stay` redirect to guest sign-in with the correct `next` target |
 | Guest with no connections | PASS | Useful empty state with a route to browse hosts |
 | Host onboarding | PASS | Account and first offering are created together; a new host does not inherit the Casa Barcelona offering |

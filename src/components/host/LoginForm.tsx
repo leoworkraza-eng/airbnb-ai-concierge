@@ -15,11 +15,10 @@ export function LoginForm({
     setSubmitting(true);
     try {
       const response = await fetch("/api/host/demo", { method: "POST" });
-      const data = (await response.json()) as { error?: string };
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) throw new Error(data.error ?? "Could not open the demo dashboard.");
 
       router.replace("/host");
-      router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not open the demo dashboard.");
     } finally {
@@ -46,11 +45,10 @@ export function LoginForm({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password }),
           });
-          const data = (await response.json()) as { error?: string };
+          const data = (await response.json().catch(() => ({}))) as { error?: string };
           if (!response.ok) throw new Error(data.error ?? "Sign-in failed.");
 
           router.replace("/host");
-          router.refresh();
         } catch (caught) {
           setError(caught instanceof Error ? caught.message : "Sign-in failed.");
         } finally {

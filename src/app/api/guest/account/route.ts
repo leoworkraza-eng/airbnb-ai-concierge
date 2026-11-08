@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createGuestCookie } from "@/lib/auth";
+import { clearGuestCookie, createGuestCookie } from "@/lib/auth";
 import { getGuestRepo } from "@/lib/data";
 import { MigrationRequiredError } from "@/lib/data/repo";
 import { signInGuestAccount } from "@/lib/guest-account";
@@ -37,6 +37,10 @@ export async function POST(request: Request) {
         { status: result.status ?? 401 },
       );
     }
+
+    // Drop a leftover demo-stay cookie so the signed-in account is the one the
+    // guest area resolves, even if a demo was opened on this browser before.
+    await clearGuestCookie();
 
     if (result.booking) {
       const repo = await getGuestRepo();

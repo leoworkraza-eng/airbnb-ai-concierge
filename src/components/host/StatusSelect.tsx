@@ -31,7 +31,7 @@ export function StatusSelect({
         body: JSON.stringify({ status: next }),
       });
       if (!response.ok) {
-        const data = (await response.json()) as { error?: string };
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Could not update the ticket.");
       }
       startTransition(() => router.refresh());
